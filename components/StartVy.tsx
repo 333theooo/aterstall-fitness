@@ -75,13 +75,17 @@ export default function StartVy({
       {/* Header — hälsning + datum + streak-chip */}
       <header className="flex items-center justify-between">
         <div>
-          {name && (
-            <div className="mb-0.5 flex items-baseline gap-1.5">
-              <span className="text-caption text-text-tertiary">Hej,</span>
-              <span className="text-body font-semibold text-text-primary">{name}</span>
-            </div>
+          {name ? (
+            <>
+              <p className="text-subheading text-text-primary">
+                <span className="font-light text-text-tertiary">Hej, </span>
+                <span className="font-semibold">{name}</span>
+              </p>
+              <p className="mt-0.5 text-caption text-text-tertiary">{formatDag()}</p>
+            </>
+          ) : (
+            <p className="text-subheading font-medium text-text-primary">{formatDag()}</p>
           )}
-          <p className="text-subheading font-medium text-text-primary">{formatDag()}</p>
         </div>
         <div className="chip animate-bounce-in delay-3">
           <Flame size={15} strokeWidth={1.8} className="text-accent" />

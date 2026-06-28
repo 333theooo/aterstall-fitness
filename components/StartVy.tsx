@@ -10,12 +10,14 @@ import {
   LockKeyhole,
   Moon,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import {
   beraknaStatusResultat,
   STATUS_COPY,
   STATUS_VAR,
+  type Status,
 } from "@/lib/status";
 import { lokalDatum } from "@/lib/streak";
 import type { CheckinPost, Plan } from "@/lib/types";
@@ -23,9 +25,15 @@ import { energiPct, senasteDagarBars } from "@/lib/historik";
 import Screen from "./ui/Screen";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
-import StatTile from "./ui/StatTile";
 import BarChart from "./ui/BarChart";
 import { PLANS, formatSEK } from "@/lib/pricing";
+
+// Ambient card background per status (rgba, not CSS variable — needed inline)
+const STATUS_GLOW: Record<Status, string> = {
+  redo: "rgba(198, 241, 53, 0.07)",
+  gransfall: "rgba(232, 197, 71, 0.08)",
+  vila: "rgba(91, 138, 122, 0.10)",
+};
 
 interface Props {
   history: CheckinPost[];
@@ -61,18 +69,17 @@ export default function StartVy({
   const statusFarg = STATUS_VAR[status];
   const energi = harCheckatInIdag && resultat ? energiPct(resultat.poang) : 0;
   const bars = senasteDagarBars(history);
-  const somn = senastePost?.svar.somn ?? null;
+  const somn = harCheckatInIdag ? (senastePost?.svar.somn ?? null) : null;
 
-  // Animate energy bar from 0 on mount so the CSS transition fires
   const [displayEnergy, setDisplayEnergy] = useState(0);
   useEffect(() => {
-    const id = setTimeout(() => setDisplayEnergy(energi), 80);
+    const id = setTimeout(() => setDisplayEnergy(energi), 100);
     return () => clearTimeout(id);
   }, [energi]);
 
   return (
     <Screen>
-      {/* Header — hälsning + datum + streak-chip */}
+      {/* Header */}
       <header className="flex items-center justify-between">
         <div>
           {name ? (
@@ -99,101 +106,96 @@ export default function StartVy({
         </div>
       </header>
 
-      {/* Hero-kort — dagens status + energi-bar */}
-      <Card padding="lg" className="animate-enter delay-1 mt-6 overflow-hidden">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+      {/* ── Hero-kort — dagsstatus ─────────────────────────────────────── */}
+      <div
+        className="animate-enter delay-1 mt-6 overflow-hidden surface p-5 sm:p-6"
+        style={{
+          background: harCheckatInIdag
+            ? `radial-gradient(ellipse 130% 90% at 110% -5%, ${STATUS_GLOW[status]} 0%, transparent 55%), linear-gradient(145deg, var(--bg-raised), var(--bg))`
+            : "linear-gradient(145deg, var(--bg-raised), var(--bg))",
+        }}
+      >
+        {/* Top row: text left, arc gauge right */}
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
             <p className="text-caption uppercase tracking-[0.1em] text-text-tertiary">
-              Dagens status
+              Dagsstatus
             </p>
             <h2
-              className="mt-2 text-hero"
+              className="mt-2 text-hero font-semibold leading-none"
               style={{
                 color: harCheckatInIdag ? statusFarg : "var(--text-primary)",
-                textShadow: harCheckatInIdag && status === "redo" ? "0 0 20px var(--accent-glow)" : "none",
+                textShadow:
+                  harCheckatInIdag && status === "redo"
+                    ? "0 0 28px var(--accent-glow)"
+                    : "none",
               }}
             >
-              {harCheckatInIdag ? statusCopy.titel : "Inte klar än"}
+              {harCheckatInIdag ? statusCopy.titel : "—"}
             </h2>
+            <p className="mt-2.5 text-bodysm leading-snug text-text-secondary">
+              {harCheckatInIdag
+                ? statusCopy.rad
+                : "Tre signaler. En tydlig bild."}
+            </p>
           </div>
-          {harCheckatInIdag && (
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
-              style={{ backgroundColor: "var(--accent-soft)" }}
-            >
-              <span
-                className="text-subheading font-semibold"
-                style={{ color: statusFarg }}
-              >
-                {energi}
-              </span>
-            </div>
-          )}
+
+          <ArcGauge
+            value={displayEnergy}
+            color={statusFarg}
+            active={harCheckatInIdag}
+          />
         </div>
 
-        <p className="mt-3 max-w-md text-bodysm text-text-secondary sm:text-body">
-          {harCheckatInIdag
-            ? statusCopy.rad
-            : "Svara på tre frågor så visar appen vad kroppen klarar idag."}
-        </p>
-
-        {/* Energi-bar med glow */}
-        <div className="mt-5">
-          <div className="flex items-center justify-between text-caption text-text-tertiary">
-            <span>Energinivå</span>
-            <span>{harCheckatInIdag ? `${energi}%` : "–"}</span>
-          </div>
-          <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-bg-elevated">
-            <div
-              className="h-full rounded-full transition-[width] duration-700"
-              style={{
-                width: `${harCheckatInIdag ? displayEnergy : 6}%`,
-                backgroundColor: harCheckatInIdag
-                  ? statusFarg
-                  : "var(--separator)",
-                boxShadow: harCheckatInIdag && displayEnergy >= 70
-                  ? "0 0 16px var(--accent-glow)"
-                  : "none",
-              }}
-            />
-          </div>
+        {/* Signal chips — sömn / trötthet / belastning */}
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <SignalChip
+            icon={<Moon size={13} strokeWidth={1.6} />}
+            label="Sömn"
+            value={somn != null ? `${somn}h` : "–"}
+            color={harCheckatInIdag ? statusFarg : undefined}
+          />
+          <SignalChip
+            icon={<Zap size={13} strokeWidth={1.6} />}
+            label="Trötthet"
+            value={
+              harCheckatInIdag && senastePost
+                ? trotthetLabel(senastePost.svar.trotthet)
+                : "–"
+            }
+            color={harCheckatInIdag ? statusFarg : undefined}
+          />
+          <SignalChip
+            icon={<Dumbbell size={13} strokeWidth={1.6} />}
+            label="Belastning"
+            value={
+              harCheckatInIdag && senastePost
+                ? belastningLabel(senastePost.svar.belastning)
+                : "–"
+            }
+            color={harCheckatInIdag ? statusFarg : undefined}
+          />
         </div>
 
-        {/* Primär CTA */}
+        {/* CTA */}
         <Button
           align="center"
-          glow
+          glow={harCheckatInIdag}
           className="mt-5"
           onClick={harCheckatInIdag ? onPass : onCheckin}
         >
-          {harCheckatInIdag ? "Visa dagens pass" : "Gör dagens check-in"}
+          {harCheckatInIdag ? "Visa dagens pass" : "Gör check-in"}
           <ArrowRight size={19} strokeWidth={2} />
         </Button>
         {harCheckatInIdag && (
           <Button variant="quiet" className="mt-2" onClick={onCheckin}>
-            Gör check-in igen
+            Gör om check-in
           </Button>
         )}
-      </Card>
-
-      {/* Statistik-rad */}
-      <div className="animate-enter delay-2 mt-3 grid grid-cols-2 gap-3">
-        <StatTile
-          icon={<Moon size={17} strokeWidth={1.6} />}
-          label="Sömn"
-          value={somn != null ? String(somn) : "–"}
-          unit={somn != null ? "h" : undefined}
-        />
-        <StatTile
-          icon={<Flame size={17} strokeWidth={1.6} />}
-          label="Streak"
-          value={String(streak || 0)}
-          unit="dagar"
-        />
       </div>
 
-      {/* Diagram-kort — senaste check-ins */}
-      <Card padding="md" className="animate-enter delay-3 mt-3">
+      {/* Diagram-kort */}
+      <Card padding="md" className="animate-enter delay-2 mt-3">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-subheading text-text-primary">Senaste dagarna</h3>
           <button
@@ -208,7 +210,7 @@ export default function StartVy({
       </Card>
 
       {/* Snabbåtgärder */}
-      <div className="animate-enter delay-4 mt-6 grid gap-3 sm:grid-cols-3">
+      <div className="animate-enter delay-3 mt-6 grid gap-3 sm:grid-cols-3">
         <ActionCard
           icon={<CheckCircle2 size={18} strokeWidth={1.6} />}
           title="Hur mår kroppen"
@@ -231,12 +233,12 @@ export default function StartVy({
 
       {/* Premium */}
       {premium ? (
-        <div className="animate-enter delay-5 mt-6 flex items-center gap-2 px-1">
+        <div className="animate-enter delay-4 mt-6 flex items-center gap-2 px-1">
           <Sparkles size={15} strokeWidth={1.6} className="text-accent" />
           <span className="text-bodysm text-text-secondary">Premium aktivt</span>
         </div>
       ) : (
-        <Card padding="md" className="animate-enter delay-5 mt-6">
+        <Card padding="md" className="animate-enter delay-4 mt-6">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-hero font-semibold leading-none text-text-primary">
@@ -263,6 +265,122 @@ export default function StartVy({
   );
 }
 
+// ── Arc gauge ──────────────────────────────────────────────────────────────
+
+function ArcGauge({
+  value,
+  color,
+  active,
+}: {
+  value: number;
+  color: string;
+  active: boolean;
+}) {
+  const size = 82;
+  const r = 29;
+  const cx = size / 2;
+  const cy = size / 2;
+  const sw = 5;
+  const circ = 2 * Math.PI * r;
+  const arcLen = circ * 0.75; // 270°
+  const gap = circ * 0.25;
+  const clamped = Math.max(0, Math.min(100, value));
+  const fill = arcLen * (clamped / 100);
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        style={{ transform: "rotate(135deg)" }}
+        aria-hidden="true"
+      >
+        {/* Track */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="none"
+          stroke="var(--separator)"
+          strokeWidth={sw}
+          strokeDasharray={`${arcLen} ${gap}`}
+          strokeLinecap="round"
+        />
+        {/* Fill */}
+        {active && (
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={sw}
+            strokeDasharray={`${fill} ${circ - fill}`}
+            strokeLinecap="round"
+            style={{
+              transition: "stroke-dasharray 0.9s cubic-bezier(0.34,1,0.64,1)",
+              filter: clamped >= 70 ? `drop-shadow(0 0 5px ${color})` : "none",
+            }}
+          />
+        )}
+      </svg>
+      {/* Center label */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {active ? (
+          <>
+            <span
+              className="font-bold leading-none tabular-nums"
+              style={{ fontSize: 21, color: "var(--text-primary)" }}
+            >
+              {clamped}
+            </span>
+            <span className="mt-0.5 text-micro uppercase tracking-wider text-text-tertiary">
+              pts
+            </span>
+          </>
+        ) : (
+          <span className="text-body text-text-tertiary">–</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Signal chip ────────────────────────────────────────────────────────────
+
+function SignalChip({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  color?: string;
+}) {
+  const active = value !== "–";
+  return (
+    <div
+      className="flex flex-col items-center gap-1 rounded-[var(--radius-card-inner)] px-2 py-3"
+      style={{ backgroundColor: "var(--bg-elevated)" }}
+    >
+      <span style={{ color: active && color ? color : "var(--text-tertiary)" }}>
+        {icon}
+      </span>
+      <span
+        className="text-bodysm font-semibold leading-none tabular-nums"
+        style={{ color: active ? "var(--text-primary)" : "var(--text-tertiary)" }}
+      >
+        {value}
+      </span>
+      <span className="text-micro text-text-tertiary">{label}</span>
+    </div>
+  );
+}
+
+// ── Action card ────────────────────────────────────────────────────────────
+
 function ActionCard({
   icon,
   title,
@@ -283,6 +401,21 @@ function ActionCard({
       <p className="mt-1 text-caption text-text-secondary">{text}</p>
     </button>
   );
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function trotthetLabel(t: number): string {
+  if (t <= 1) return "Pigg";
+  if (t === 2) return "Okej";
+  if (t === 3) return "Tungt";
+  return "Slut";
+}
+
+function belastningLabel(b: string): string {
+  if (b === "latt") return "Lätt";
+  if (b === "medel") return "Medel";
+  return "Tungt";
 }
 
 function formatDag(d: Date = new Date()): string {

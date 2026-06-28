@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BarChart3, Dumbbell, RotateCcw } from "lucide-react";
+import { ArrowRight, BarChart3, Dumbbell, LockKeyhole, RotateCcw } from "lucide-react";
 import {
   STATUS_COPY,
   STATUS_VAR,
@@ -18,9 +18,11 @@ interface Props {
   resultat: StatusResultat;
   streak: number;
   svar?: CheckinSvar | null;
+  premium?: boolean;
   onVisaPass: () => void;
   onInsikter: () => void;
   onNyCheckin: () => void;
+  onUpgrade?: () => void;
 }
 
 function poangText(poang: number) {
@@ -54,14 +56,17 @@ export default function StatusVy({
   resultat,
   streak,
   svar,
+  premium = false,
   onVisaPass,
   onInsikter,
   onNyCheckin,
+  onUpgrade,
 }: Props) {
   const copy = STATUS_COPY[resultat.status];
   const farg = STATUS_VAR[resultat.status];
   const visadStreak = Math.max(streak, 1);
   const passKontextRad = passKontext(svar?.plats, svar?.tid);
+  const visaUppgraderingNudge = !premium && resultat.status === "vila" && onUpgrade;
 
   return (
     <Screen width="wide">
@@ -188,6 +193,37 @@ export default function StatusVy({
           </button>
         </div>
       </div>
+
+      {/* ── Vila recovery upsell — visas bara för gratisanvändare med vila-status ── */}
+      {visaUppgraderingNudge && (
+        <div
+          className="animate-enter mt-4 overflow-hidden rounded-[var(--radius-card)] border p-5"
+          style={{
+            borderColor: "var(--separator)",
+            background: "linear-gradient(145deg, var(--bg-raised), var(--bg))",
+          }}
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <LockKeyhole size={14} strokeWidth={1.6} style={{ color: "var(--vila)" }} />
+            <p className="text-caption uppercase tracking-[0.1em]" style={{ color: "var(--vila)" }}>
+              Djupare återhämtning
+            </p>
+          </div>
+          <p className="text-bodysm font-medium text-text-primary">
+            Kroppen signalerar vila. Se vad som driver det.
+          </p>
+          <p className="mt-1.5 text-bodysm text-text-secondary">
+            Med premium ser du kopplingen mellan sömn, trötthet och vila — och vad som faktiskt hjälper kroppen tillbaka.
+          </p>
+          <button
+            onClick={onUpgrade}
+            className="press mt-4 flex w-full items-center justify-center rounded-[var(--radius-btn)] py-3 text-bodysm font-semibold"
+            style={{ backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--separator)" }}
+          >
+            Lås upp din återhämtning
+          </button>
+        </div>
+      )}
     </Screen>
   );
 }

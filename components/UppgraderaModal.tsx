@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, Lock, X } from "lucide-react";
 import Button from "./ui/Button";
 import { PLANS, FOUNDING, formatSEK } from "@/lib/pricing";
 import type { Plan } from "@/lib/types";
@@ -15,15 +15,15 @@ interface Props {
 }
 
 const PUNKTER = [
-  "Kroppen väljer. Du gör passen som faktiskt hjälper.",
-  "Se hur din kropp har förändrats — dag för dag.",
-  "Förstå kopplingen mellan sömn och prestation.",
+  "Anpassade pass varje dag — baserat på hur kroppen faktiskt mår.",
+  "Full historik — se hur din kropp förändras vecka för vecka.",
+  "Sömn och prestation synliggjort. Se kopplingen ingen PT visar.",
 ];
 
 export default function UppgraderaModal({
   onStang,
   onKop,
-  defaultPlan = "month",
+  defaultPlan = "year",
   defaultFounding = false,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -36,11 +36,13 @@ export default function UppgraderaModal({
   }, []);
 
   const yearAmount = foundingApplicable ? FOUNDING.amount : PLANS.year.amount;
-  const yearMonthlyEq = PLANS.year.monthlyEquivalent;
+  const yearMonthlyEq = foundingApplicable
+    ? Math.round(FOUNDING.amount / 12)
+    : PLANS.year.monthlyEquivalent;
 
   const ctaText =
     valdPlan === "year"
-      ? `Börja nu — ${formatSEK(yearAmount)}/år`
+      ? `Börja nu — ${formatSEK(yearMonthlyEq)}/mån`
       : `Börja nu — ${formatSEK(PLANS.month.amount)}/mån`;
 
   return (
@@ -67,7 +69,7 @@ export default function UppgraderaModal({
               Premium
             </p>
             <h2 className="mt-1.5 text-heading text-text-primary">
-              Lås upp allt.
+              Hela kroppen. Varje dag.
             </h2>
           </div>
           <button
@@ -79,7 +81,7 @@ export default function UppgraderaModal({
           </button>
         </div>
 
-        {/* Feature list — compact */}
+        {/* Feature list */}
         <div className="mb-5 grid gap-2">
           {PUNKTER.map((punkt) => (
             <div key={punkt} className="flex items-start gap-2.5">
@@ -91,71 +93,88 @@ export default function UppgraderaModal({
           ))}
         </div>
 
-        {/* Month plan — dominant, full width */}
+        {/* ── Year plan — hero card (highest LTV, default) ── */}
         <button
-          onClick={() => setValdPlan("month")}
+          onClick={() => setValdPlan("year")}
           className="press relative w-full rounded-[var(--radius-card-inner)] border p-4 text-left"
           style={{
-            borderColor: valdPlan === "month" ? "var(--accent)" : "var(--separator)",
-            backgroundColor: valdPlan === "month" ? "var(--accent-soft)" : "var(--bg-elevated)",
-            boxShadow: valdPlan === "month" ? "0 0 28px var(--accent-glow)" : "none",
+            borderColor: valdPlan === "year" ? "var(--accent)" : "var(--separator)",
+            backgroundColor: valdPlan === "year" ? "var(--accent-soft)" : "var(--bg-elevated)",
+            boxShadow: valdPlan === "year" ? "0 0 28px var(--accent-glow)" : "none",
             transition: "border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease",
           }}
         >
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-hero font-semibold leading-none text-text-primary">
-                {formatSEK(PLANS.month.amount)}
+            <div className="min-w-0">
+              {/* Value badge */}
+              <span
+                className="chip mb-2 inline-flex text-caption"
+                style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
+              >
+                {foundingApplicable
+                  ? "Grundarpris · låst för alltid"
+                  : `Bästa värdet · ${PLANS.year.savingsPercent}% rabatt`}
+              </span>
+              {/* Price — monthly equivalent for easy comparison */}
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-hero font-semibold leading-none text-text-primary">
+                  {formatSEK(yearMonthlyEq)}
+                </p>
+                <span className="text-bodysm text-text-secondary">/ mån</span>
+              </div>
+              <p className="mt-1 text-bodysm text-text-secondary">
+                {formatSEK(yearAmount)} faktureras per år · avsluta när du vill
               </p>
-              <p className="mt-1 text-bodysm text-text-secondary">per månad · avsluta när du vill</p>
+              {foundingApplicable && (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <Lock size={11} strokeWidth={2} style={{ color: "var(--accent)" }} />
+                  <p className="text-caption" style={{ color: "var(--accent)" }}>
+                    Priset är låst så länge du stannar
+                  </p>
+                </div>
+              )}
             </div>
             <div
-              className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+              className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
               style={{
-                borderColor: valdPlan === "month" ? "var(--accent)" : "var(--separator)",
-                backgroundColor: valdPlan === "month" ? "var(--accent)" : "transparent",
+                borderColor: valdPlan === "year" ? "var(--accent)" : "var(--separator)",
+                backgroundColor: valdPlan === "year" ? "var(--accent)" : "transparent",
               }}
             >
-              {valdPlan === "month" && (
+              {valdPlan === "year" && (
                 <Check size={12} strokeWidth={2.5} style={{ color: "var(--bg)" }} />
               )}
             </div>
           </div>
         </button>
 
-        {/* Year plan — secondary, compact but shows savings */}
+        {/* ── Month plan — secondary escape valve ── */}
         <button
-          onClick={() => setValdPlan("year")}
+          onClick={() => setValdPlan("month")}
           className="press mt-2 flex w-full items-center justify-between rounded-[var(--radius-card-inner)] border px-4 py-3 text-left"
           style={{
-            borderColor: valdPlan === "year" ? "var(--accent)" : "var(--separator)",
-            backgroundColor: valdPlan === "year" ? "var(--accent-soft)" : "transparent",
-            boxShadow: valdPlan === "year" ? "0 0 16px var(--accent-glow)" : "none",
+            borderColor: valdPlan === "month" ? "var(--accent)" : "var(--separator)",
+            backgroundColor: valdPlan === "month" ? "var(--accent-soft)" : "transparent",
+            boxShadow: valdPlan === "month" ? "0 0 16px var(--accent-glow)" : "none",
             transition: "border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease",
           }}
         >
-          <div className="flex items-center gap-3">
-            <div>
-              <span className="text-body font-semibold text-text-primary">
-                {formatSEK(yearAmount)}
-              </span>
-              <span className="ml-1.5 text-bodysm text-text-secondary">per år</span>
-            </div>
-            <span
-              className="chip text-caption"
-              style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
-            >
-              {foundingApplicable ? "Grundarpris" : `spara ${PLANS.year.savingsPercent}%`}
+          <div>
+            <span className="text-body font-semibold text-text-primary">
+              {formatSEK(PLANS.month.amount)}
+            </span>
+            <span className="ml-1.5 text-bodysm text-text-secondary">
+              per månad · avsluta när du vill
             </span>
           </div>
           <div
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
             style={{
-              borderColor: valdPlan === "year" ? "var(--accent)" : "var(--separator)",
-              backgroundColor: valdPlan === "year" ? "var(--accent)" : "transparent",
+              borderColor: valdPlan === "month" ? "var(--accent)" : "var(--separator)",
+              backgroundColor: valdPlan === "month" ? "var(--accent)" : "transparent",
             }}
           >
-            {valdPlan === "year" && (
+            {valdPlan === "month" && (
               <Check size={11} strokeWidth={2.5} style={{ color: "var(--bg)" }} />
             )}
           </div>

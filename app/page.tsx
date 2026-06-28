@@ -368,9 +368,11 @@ export default function HomePage() {
             resultat={aktivtResultat}
             streak={streak}
             svar={dagensSvar}
+            premium={premium}
             onVisaPass={() => setSkede("intensity")}
             onInsikter={() => setSkede("insikter")}
             onNyCheckin={() => setSkede("checkin")}
+            onUpgrade={() => oppnaUppgradera({ plan: "year", founding: false })}
           />
         )}
 

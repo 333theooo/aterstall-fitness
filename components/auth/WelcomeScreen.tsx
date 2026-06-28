@@ -1,6 +1,7 @@
 "use client";
 
 import { Moon, TrendingUp, Wind, Zap } from "lucide-react";
+import { PLANS, formatSEK } from "@/lib/pricing";
 
 interface Props {
   onSkapaKonto: () => void;
@@ -40,7 +41,7 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
         </div>
 
         {/* Hero-copy */}
-        <div className="mx-auto max-w-xs text-center" style={{ animationDelay: "80ms" }}>
+        <div className="mx-auto max-w-xs text-center">
           <div className="animate-enter" style={{ animationDelay: "60ms" }}>
             <h1
               className="text-hero text-text-primary"
@@ -105,6 +106,15 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
           >
             Logga in
           </button>
+
+          {/* Price anchor — primes the paywall, removes sticker shock */}
+          <p className="mt-5 text-center text-caption text-text-tertiary">
+            Premium från{" "}
+            <span className="text-text-secondary font-medium">
+              {formatSEK(PLANS.year.monthlyEquivalent)}/mån
+            </span>
+            {" "}· Kom igång helt gratis
+          </p>
         </div>
       </div>
     </main>
@@ -112,7 +122,7 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
 }
 
 const PUNKTER = [
-  { Icon: TrendingUp, text: "Förstå varför du presterar som du gör." },
-  { Icon: Zap, text: "Pass som möter kroppen — inte ett schema." },
+  { Icon: TrendingUp, text: "Förstå varför du presterar som du gör — varje dag." },
+  { Icon: Zap, text: "Pass som möter kroppen. Inte ett schema." },
   { Icon: Moon, text: "Se mönstren ingen PT berättar om." },
 ];

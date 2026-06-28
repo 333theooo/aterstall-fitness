@@ -244,25 +244,26 @@ export default function StartVy({
         </div>
       ) : (
         <Card padding="md" className="animate-enter delay-4 mt-6">
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-hero font-semibold leading-none text-text-primary">
-                {formatSEK(PLANS.month.amount)}
+                {formatSEK(PLANS.year.monthlyEquivalent)}
+                <span className="ml-1 text-bodysm font-normal text-text-tertiary">/ mån</span>
               </p>
               <p className="mt-1.5 text-caption text-text-secondary">
-                per månad · avsluta när du vill
+                {formatSEK(PLANS.year.amount)} / år · spara {PLANS.year.savingsPercent}%
               </p>
             </div>
-            <LockKeyhole size={18} strokeWidth={1.5} className="mb-0.5 shrink-0 text-text-tertiary" />
+            <LockKeyhole size={18} strokeWidth={1.5} className="mt-1 shrink-0 text-text-tertiary" />
           </div>
-          <Button glow className="mt-4" onClick={() => onPlan("month")}>
+          <Button glow className="mt-4" onClick={() => onPlan("year")}>
             Lås upp
           </Button>
           <button
-            onClick={() => onPlan("year")}
+            onClick={() => onPlan("month")}
             className="press mt-3 w-full text-center text-bodysm text-text-tertiary hover:text-text-secondary"
           >
-            Eller {formatSEK(PLANS.year.amount)}/år · spara {PLANS.year.savingsPercent}%
+            Eller {formatSEK(PLANS.month.amount)}/mån · månad för månad
           </button>
         </Card>
       )}

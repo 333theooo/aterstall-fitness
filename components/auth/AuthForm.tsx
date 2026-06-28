@@ -133,20 +133,7 @@ export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="din@epost.se"
-                className="w-full rounded-[var(--radius-btn)] border px-4 text-body text-text-primary placeholder:text-text-tertiary"
-                style={{
-                  backgroundColor: "var(--bg-elevated)",
-                  borderColor: "var(--separator)",
-                  height: "52px",
-                  outline: "none",
-                  transition: "border-color 0.2s ease",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--accent)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--separator)";
-                }}
+                className="field-input w-full px-4 text-body placeholder:text-text-tertiary"
               />
             </div>
 
@@ -168,20 +155,7 @@ export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === "signup" ? "Minst 8 tecken" : "••••••••"}
-                  className="w-full rounded-[var(--radius-btn)] border px-4 pr-12 text-body text-text-primary placeholder:text-text-tertiary"
-                  style={{
-                    backgroundColor: "var(--bg-elevated)",
-                    borderColor: "var(--separator)",
-                    height: "52px",
-                    outline: "none",
-                    transition: "border-color 0.2s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--accent)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--separator)";
-                  }}
+                  className="field-input w-full px-4 pr-12 text-body placeholder:text-text-tertiary"
                 />
                 <button
                   type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { Wind } from "lucide-react";
+import { Moon, TrendingUp, Wind, Zap } from "lucide-react";
 
 interface Props {
   onSkapaKonto: () => void;
@@ -10,13 +10,13 @@ interface Props {
 export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-bg">
-      {/* Subtil bakgrundsglöd */}
+      {/* Bakgrundsglöd — dubbel radial för djup */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 50% at 50% 80%, rgba(198,241,53,0.06) 0%, transparent 70%)",
+            "radial-gradient(ellipse 80% 55% at 50% 85%, rgba(198,241,53,0.10) 0%, transparent 70%), radial-gradient(ellipse 50% 40% at 15% 20%, rgba(198,241,53,0.05) 0%, transparent 60%)",
         }}
       />
 
@@ -24,12 +24,12 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
         {/* Logotyp + namn */}
         <div className="flex flex-col items-center gap-5 animate-enter">
           <div
-            className="flex h-16 w-16 items-center justify-center rounded-[22px]"
+            className="animate-float flex h-16 w-16 items-center justify-center rounded-[22px]"
             style={{
               background:
                 "linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-raised) 100%)",
               border: "1px solid var(--separator)",
-              boxShadow: "0 0 32px rgba(198,241,53,0.12), 0 8px 24px rgba(0,0,0,0.4)",
+              boxShadow: "0 0 40px rgba(198,241,53,0.18), 0 8px 24px rgba(0,0,0,0.4)",
             }}
           >
             <Wind size={28} strokeWidth={1.5} style={{ color: "var(--accent)" }} />
@@ -46,33 +46,30 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
               className="text-hero text-text-primary"
               style={{ lineHeight: "1.08", letterSpacing: "-0.02em" }}
             >
-              Lyssna på
+              Din kropp vet.
               <br />
-              kroppen.
-              <br />
-              <span style={{ color: "var(--accent)" }}>Varje dag.</span>
+              <span style={{ color: "var(--accent)" }}>Du behöver bara fråga.</span>
             </h1>
             <p className="mt-5 text-body text-text-secondary">
-              Spåra din återhämtning, anpassa varje pass och se mönstren som
-              förklarar hur du mår — på riktigt.
+              Tre frågor om dagen. Appen resten.
             </p>
           </div>
 
-          {/* Feature-punkter */}
-          <div
-            className="mt-8 grid gap-3 text-left animate-enter"
-            style={{ animationDelay: "120ms" }}
-          >
-            {PUNKTER.map(({ icon, text }) => (
-              <div key={text} className="flex items-start gap-3">
+          {/* Feature-punkter — staggerad entré */}
+          <div className="mt-8 grid gap-3 text-left">
+            {PUNKTER.map(({ Icon, text }, i) => (
+              <div
+                key={text}
+                className={`animate-enter flex items-start gap-3 delay-${i + 2}`}
+              >
                 <span
-                  className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-caption"
+                  className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
                   style={{
                     backgroundColor: "var(--accent-soft)",
                     color: "var(--accent)",
                   }}
                 >
-                  {icon}
+                  <Icon size={14} strokeWidth={2} />
                 </span>
                 <p className="text-bodysm text-text-secondary">{text}</p>
               </div>
@@ -115,7 +112,7 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
 }
 
 const PUNKTER = [
-  { icon: "↑", text: "Daglig check-in på sömn, trötthet och belastning." },
-  { icon: "◈", text: "Anpassade pass baserade på hur kroppen mår idag." },
-  { icon: "~", text: "Mönster och insikter som byggs upp över tid." },
+  { Icon: TrendingUp, text: "Förstå varför du presterar som du gör." },
+  { Icon: Zap, text: "Pass som möter kroppen — inte ett schema." },
+  { Icon: Moon, text: "Se mönstren ingen PT berättar om." },
 ];

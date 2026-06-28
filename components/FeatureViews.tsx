@@ -48,11 +48,8 @@ export function IntensitySelectionView({
         Dagsform
       </p>
       <h1 className="mt-3 text-heading text-text-primary">
-        Hur vill du träna idag?
+        Välj intensitet
       </h1>
-      <p className="mt-2 text-bodysm text-text-secondary">
-        Välj känslan som ligger närmast. Passet anpassas automatiskt.
-      </p>
 
       <div className="mt-6 grid grid-cols-3 gap-3">
         {choices.map((choice) => {
@@ -68,6 +65,8 @@ export function IntensitySelectionView({
               style={{
                 borderColor: active ? "var(--accent)" : "var(--separator)",
                 background: active ? "var(--accent-soft)" : undefined,
+                boxShadow: active ? "0 0 16px var(--accent-glow)" : "none",
+                transition: "border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease",
               }}
             >
               <span className="block text-4xl">{choice.emoji}</span>
@@ -249,7 +248,7 @@ export function RecoveryView({ onDone }: { onDone: () => void }) {
       </p>
       <h1 className="mt-3 text-heading text-text-primary">Återhämtning</h1>
       <p className="mt-2 text-bodysm text-text-secondary">
-        Lugn rörelse, andning eller stillhet. Välj det enklaste.
+        Ta det lugnt idag.
       </p>
       <div className="mt-5 grid grid-cols-3 gap-2">
         {tabs.map(([id, label]) => (

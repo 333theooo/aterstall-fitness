@@ -88,14 +88,17 @@ export default function CheckIn({ onKlar, onAvbryt }: Props) {
       <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col items-center justify-center px-5">
         <div className="animate-enter text-center">
           <div
-            className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl text-accent"
-            style={{ backgroundColor: "var(--accent-soft)" }}
+            className="animate-bounce-in mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl text-accent"
+            style={{
+              backgroundColor: "var(--accent-soft)",
+              boxShadow: "0 0 28px var(--accent-glow)",
+            }}
           >
-            <Check size={22} strokeWidth={1.6} />
+            <Check size={24} strokeWidth={1.8} />
           </div>
-          <p className="text-body text-text-primary">Läser av dagens signaler</p>
+          <p className="text-body text-text-primary">Räknar ut din dag</p>
           <p className="mt-2 text-bodysm text-text-secondary">
-            Vi väljer en enkel nivå för idag.
+            Tar ett ögonblick…
           </p>
         </div>
       </div>
@@ -115,7 +118,7 @@ export default function CheckIn({ onKlar, onAvbryt }: Props) {
       </button>
 
       <div>
-        <div className="mb-8 h-1 rounded-full bg-bg-elevated">
+        <div className="mb-8 h-1.5 rounded-full bg-bg-elevated">
           <div
             className="h-full rounded-full bg-accent transition-[width] duration-300"
             style={{ width: `${progress}%` }}
@@ -155,9 +158,6 @@ export default function CheckIn({ onKlar, onAvbryt }: Props) {
         })}
       </div>
 
-      <p className="mt-auto pt-10 text-bodysm text-text-tertiary">
-        Det finns inget rätt svar. Välj det som känns närmast.
-      </p>
     </div>
   );
 }

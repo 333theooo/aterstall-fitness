@@ -38,7 +38,7 @@ export default function StatusVy({
 
   return (
     <Screen width="wide">
-      <div className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-3 lg:grid-cols-2">
         {/* Hero — dagens status + handlingar */}
         <Card
           padding="lg"
@@ -85,17 +85,17 @@ export default function StatusVy({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-caption uppercase tracking-[0.08em] text-text-tertiary">
-                  Varför?
+                  Varför {copy.titel.toLowerCase()}?
                 </p>
                 <h2 className="mt-2 text-subheading text-text-primary">
-                  Appen tittar på tre saker.
+                  Så räknade vi:
                 </h2>
               </div>
               <span
-                className="chip"
+                className="rounded-[var(--radius-btn)] px-3 py-1.5 text-body font-semibold"
                 style={{ color: farg, background: "var(--accent-soft)" }}
               >
-                Nivå {poangText(resultat.poang)}
+                {poangText(resultat.poang)}
               </span>
             </div>
 
@@ -122,13 +122,18 @@ export default function StatusVy({
           </Card>
 
           {/* Streak */}
-          <Card padding="md">
+          <Card padding="md" className={streak >= 7 ? "animate-celebrate" : undefined}>
             <p className="text-caption uppercase tracking-[0.08em] text-text-tertiary">
               Dagar
             </p>
             <div className="mt-3 flex items-end justify-between gap-4">
               <div>
-                <p className="text-heading text-text-primary">{visadStreak}</p>
+                <p
+                  className="text-heading"
+                  style={{ color: visadStreak >= 3 ? "var(--accent)" : "var(--text-primary)" }}
+                >
+                  {visadStreak}
+                </p>
                 <p className="text-bodysm text-text-secondary">
                   {visadStreak === 1 ? "dag" : "dagar"} i rad
                 </p>
@@ -149,7 +154,7 @@ export default function StatusVy({
                 {copy.passNiva}
               </span>
               <span className="mt-1 block text-caption text-text-secondary">
-                En enkel rekommendation för idag.
+                Baserat på hur du mår just nu.
               </span>
             </span>
             <ArrowRight size={20} strokeWidth={1.5} color={farg} />

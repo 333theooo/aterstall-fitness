@@ -15,9 +15,9 @@ interface Props {
 }
 
 const PUNKTER = [
-  "Hela passbanken för Redo, Gränsfall och Vila.",
-  "Full historik över incheckningar.",
-  "Mönster mellan sömn, trötthet och status.",
+  "Kroppen väljer. Du gör passen som faktiskt hjälper.",
+  "Se hur din kropp har förändrats — dag för dag.",
+  "Förstå kopplingen mellan sömn och prestation.",
 ];
 
 export default function UppgraderaModal({
@@ -98,7 +98,7 @@ export default function UppgraderaModal({
             badge={
               foundingApplicable
                 ? "Grundarpris"
-                : `Spara ${PLANS.year.savingsPercent} %`
+                : `Bästa värdet · ${PLANS.year.savingsPercent}% rabatt`
             }
             badgeHighlight={!foundingApplicable}
             onClick={() => setValdPlan("year")}
@@ -145,13 +145,13 @@ function PlanKort({
       style={{
         borderColor: vald ? "var(--accent)" : "var(--separator)",
         backgroundColor: vald ? "var(--accent-soft)" : "var(--bg-elevated)",
-        boxShadow: vald ? "0 0 12px var(--accent-glow)" : "none",
+        boxShadow: vald ? "0 0 22px var(--accent-glow)" : "none",
         transition: "border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease",
       }}
     >
       {badge && (
         <span
-          className="chip mb-1 self-start text-caption"
+          className={`chip mb-1 self-start text-caption${badgeHighlight ? " animate-glow-pulse" : ""}`}
           style={
             badgeHighlight
               ? { backgroundColor: "var(--accent-soft)", color: "var(--accent)" }

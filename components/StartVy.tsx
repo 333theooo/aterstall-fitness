@@ -77,12 +77,15 @@ export default function StartVy({
             Återställ
           </p>
           <h1 className="mt-1 text-heading text-text-primary">
-            {harCheckatInIdag ? "Bra jobbat idag" : "Hej"}
+            {harCheckatInIdag ? "Bra jobbat idag" : "Morgonens frågor"}
           </h1>
         </div>
         <div className="chip animate-bounce-in delay-3">
           <Flame size={15} strokeWidth={1.8} className="text-accent" />
-          <span className="text-bodysm font-semibold text-text-primary">
+          <span
+            className="text-bodysm font-semibold"
+            style={{ color: streak > 0 ? "var(--accent)" : "var(--text-primary)" }}
+          >
             {streak || 0}
           </span>
           <span className="text-caption text-text-tertiary">dgr</span>
@@ -100,6 +103,7 @@ export default function StartVy({
               className="mt-2 text-hero"
               style={{
                 color: harCheckatInIdag ? statusFarg : "var(--text-primary)",
+                textShadow: harCheckatInIdag && status === "redo" ? "0 0 20px var(--accent-glow)" : "none",
               }}
             >
               {harCheckatInIdag ? statusCopy.titel : "Inte klar än"}
@@ -140,8 +144,8 @@ export default function StartVy({
                 backgroundColor: harCheckatInIdag
                   ? statusFarg
                   : "var(--separator)",
-                boxShadow: harCheckatInIdag
-                  ? "0 0 12px var(--accent-glow)"
+                boxShadow: harCheckatInIdag && displayEnergy >= 70
+                  ? "0 0 16px var(--accent-glow)"
                   : "none",
               }}
             />
@@ -200,20 +204,20 @@ export default function StartVy({
       <div className="animate-enter delay-4 mt-6 grid gap-3 sm:grid-cols-3">
         <ActionCard
           icon={<CheckCircle2 size={18} strokeWidth={1.6} />}
-          title="Checka in"
-          text="Sömn, trötthet, senaste pass."
+          title="Hur mår kroppen"
+          text="Tre frågor. En tydlig bild."
           onClick={onCheckin}
         />
         <ActionCard
           icon={<Dumbbell size={18} strokeWidth={1.6} />}
-          title="Träna"
-          text="Hemma, tyst, utan gymkrav."
+          title="Dagens pass"
+          text="Anpassat efter hur du mår."
           onClick={onPass}
         />
         <ActionCard
           icon={<BarChart3 size={18} strokeWidth={1.6} />}
-          title="Följ mönster"
-          text="Se hur kroppen svarar."
+          title="Din utveckling"
+          text="Sömn, energi och trend."
           onClick={onInsikter}
         />
       </div>
@@ -283,7 +287,7 @@ function ActionCard({
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="press lift surface p-4 text-left">
+    <button onClick={onClick} className="press lift hover-lift surface p-4 text-left">
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-bg-elevated text-accent">
         {icon}
       </span>

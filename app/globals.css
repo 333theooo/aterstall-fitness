@@ -21,7 +21,8 @@
   /* Accent — lime/neon-grön, huvudaccent för status/progress/highlights */
   --accent: #c6f135;
   --accent-dim: #8fb024;
-  --accent-glow: rgba(198, 241, 53, 0.35);
+  --accent-glow: rgba(198, 241, 53, 0.5);
+  --accent-glow-strong: rgba(198, 241, 53, 0.7);
   --accent-soft: rgba(198, 241, 53, 0.12); /* mjuk fyllning bakom aktiv accent */
 
   /* Radier (§5) — en skala, refereras överallt istället för inline-px */
@@ -158,7 +159,7 @@ body {
 /* Check-in svar: snap-bekräftelse vid val */
 @keyframes select-snap {
   0%   { transform: scale(1); }
-  32%  { transform: scale(1.028); }
+  32%  { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 .select-snap {
@@ -167,11 +168,31 @@ body {
 
 /* Primär CTA: andande glow (knapp med glow-prop) */
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 10px var(--accent-glow); }
-  50%       { box-shadow: 0 0 26px var(--accent-glow), 0 0 0 1px rgba(198,241,53,0.16); }
+  0%, 100% { box-shadow: 0 0 12px var(--accent-glow); }
+  50%       { box-shadow: 0 0 40px var(--accent-glow), 0 0 0 2px rgba(198,241,53,0.2); }
 }
 .animate-glow-pulse {
   animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Milestone celebration — scale pop + glow flash */
+@keyframes celebrate {
+  0%   { transform: scale(1); box-shadow: none; }
+  30%  { transform: scale(1.06); box-shadow: 0 0 28px var(--accent-glow-strong); }
+  60%  { transform: scale(0.98); box-shadow: 0 0 12px var(--accent-glow); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+.animate-celebrate {
+  animation: celebrate 0.6s var(--ease-spring) both;
+}
+
+/* Subtle float for hero elements (logo, icons) */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
 }
 
 /* Stagger-fördröjningar för kort-kaskad */
@@ -195,6 +216,29 @@ body {
 /* Kort kan nu lyfta lätt vid press/hover (v2 tillåter skuggor) */
 .lift:active {
   transform: translateY(-2px) scale(0.99);
+}
+
+/* Hover-lyft för interaktiva kort — subtil upplevelse av djup */
+.hover-lift {
+  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Formulärfält — ersätter inline CSS i AuthForm */
+.field-input {
+  height: 52px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-btn);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+.field-input:focus-visible {
+  border-color: var(--accent);
 }
 
 .breathing-circle {

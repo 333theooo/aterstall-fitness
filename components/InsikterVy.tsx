@@ -99,9 +99,9 @@ export default function InsikterVy({
             strokeWidth={1.5}
             className="mx-auto text-accent"
           />
-          <p className="mt-4 text-body text-text-primary">Inga insikter än</p>
+          <p className="mt-4 text-body text-text-primary">Dag ett.</p>
           <p className="mt-2 text-bodysm text-text-secondary">
-            Första mönstret börjar med dagens tre frågor.
+            Checka in varje dag. Mönstret byggs av sig självt.
           </p>
           <Button align="center" glow className="mt-5" onClick={onCheckin}>
             Starta check-in
@@ -112,18 +112,18 @@ export default function InsikterVy({
           {/* Statistik-rad — check-in + pass på samma plats */}
           <div className="mt-6 grid grid-cols-3 gap-3">
             <StatTile
-              icon={<Flame size={17} strokeWidth={1.6} />}
+              icon={<Flame size={17} strokeWidth={1.6} style={{ color: "var(--accent)" }} />}
               label="Streak"
               value={String(streak || 0)}
               unit="dgr"
             />
             <StatTile
-              icon={<Dumbbell size={17} strokeWidth={1.6} />}
+              icon={<Dumbbell size={17} strokeWidth={1.6} style={{ color: "var(--gransfall)" }} />}
               label="Pass"
               value={String(sessions.length)}
             />
             <StatTile
-              icon={<Clock3 size={17} strokeWidth={1.6} />}
+              icon={<Clock3 size={17} strokeWidth={1.6} style={{ color: "var(--vila)" }} />}
               label="Tid"
               value={String(Math.round(totalMinutes / 60))}
               unit="h"
@@ -134,7 +134,7 @@ export default function InsikterVy({
           <Card padding="md" className="mt-3">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-subheading text-text-primary">
-                Veckans aktivitet
+                Den här veckan
               </h2>
               <span
                 className="chip"
@@ -162,6 +162,7 @@ export default function InsikterVy({
                     style={{
                       color: active ? "var(--accent)" : "var(--text-primary)",
                       background: active ? "var(--accent-soft)" : undefined,
+                      border: active ? "1px solid var(--accent)" : "1px solid transparent",
                     }}
                   >
                     {goal}
@@ -173,7 +174,7 @@ export default function InsikterVy({
 
           {/* Mönster — check-in-insikter */}
           <Card padding="md" className="mt-3">
-            <h2 className="text-subheading text-text-primary">Mönster</h2>
+            <h2 className="text-subheading text-text-primary">Vad kroppen säger</h2>
             <DividedList className="mt-2">
               <DividedRow className="justify-between">
                 <span className="text-bodysm text-text-secondary">
@@ -206,7 +207,7 @@ export default function InsikterVy({
           <Card padding="md" className="mt-3">
             <div className="flex items-center justify-between">
               <h2 className="text-subheading text-text-primary">
-                Senaste incheckningar
+                Senaste dagarna
               </h2>
               {locked && (
                 <LockKeyhole
@@ -247,8 +248,7 @@ export default function InsikterVy({
             {locked && history.length > 0 && (
               <div className="tile mt-4 p-4">
                 <p className="text-bodysm text-text-primary">
-                  Premium visar hela historiken och kopplar sömn, trötthet och
-                  status.
+                  Se hela din resa — inte bara de tre senaste dagarna.
                 </p>
                 <Button variant="secondary" className="mt-4" onClick={onUpgrade}>
                   Lås upp insikter

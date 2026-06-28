@@ -111,7 +111,7 @@ export default function WelcomeScreen({ onSkapaKonto, onLoggaIn }: Props) {
           <p className="mt-5 text-center text-caption text-text-tertiary">
             Premium från{" "}
             <span className="text-text-secondary font-medium">
-              {formatSEK(PLANS.year.monthlyEquivalent)}/mån
+              {formatSEK(PLANS.month.amount)}/mån
             </span>
             {" "}· Kom igång helt gratis
           </p>

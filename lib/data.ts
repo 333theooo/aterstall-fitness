@@ -55,6 +55,7 @@ export async function loadState(): Promise<AppState> {
       streak: local.getStreak(),
       premium: local.getPremium(),
       checkinCount: history.length,
+      name: null,
       ...NULL_SUBSCRIPTION,
     };
   }
@@ -62,7 +63,7 @@ export async function loadState(): Promise<AppState> {
   const sb = getSupabase();
   const userId = await ensureUser();
   if (!sb || !userId) {
-    return { history: [], streak: 0, premium: false, checkinCount: 0, ...NULL_SUBSCRIPTION };
+    return { history: [], streak: 0, premium: false, checkinCount: 0, name: null, ...NULL_SUBSCRIPTION };
   }
 
   const [{ data: rader }, { data: profil }] = await Promise.all([
@@ -73,7 +74,7 @@ export async function loadState(): Promise<AppState> {
     sb
       .from("profiles")
       .select(
-        "premium,stripe_customer_id,subscription_status,cancel_at_period_end,last_payment_status",
+        "premium,name,stripe_customer_id,subscription_status,cancel_at_period_end,last_payment_status",
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -86,6 +87,7 @@ export async function loadState(): Promise<AppState> {
     streak: computeStreak(history.map((p) => p.date)),
     premium: Boolean(profil?.premium),
     checkinCount: history.length,
+    name: (profil?.name as string | null) ?? null,
     lastPaymentStatus: (profil?.last_payment_status as string | null) ?? null,
     cancelAtPeriodEnd: Boolean(profil?.cancel_at_period_end),
     subscriptionStatus: (profil?.subscription_status as string | null) ?? null,
@@ -108,6 +110,7 @@ export async function saveCheckin(
       streak: local.getStreak(),
       premium: local.getPremium(),
       checkinCount: history.length,
+      name: null,
       ...NULL_SUBSCRIPTION,
     };
   }

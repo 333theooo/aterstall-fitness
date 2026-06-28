@@ -13,6 +13,7 @@ interface Props {
 
 export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) {
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visaLosenord, setVisaLosenord] = useState(false);
@@ -27,7 +28,7 @@ export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) 
 
     try {
       if (mode === "signup") {
-        const { data, error: err } = await signUpWithEmail(email.trim(), password);
+        const { data, error: err } = await signUpWithEmail(email.trim(), password, name.trim() || undefined);
         if (err) {
           setError(tolkFel(err.message));
           return;
@@ -117,6 +118,27 @@ export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) 
           style={{ animationDelay: "60ms" }}
         >
           <div className="grid gap-3">
+            {/* Namn (enbart vid signup) */}
+            {mode === "signup" && (
+              <div>
+                <label
+                  htmlFor="name"
+                  className="mb-1.5 block text-caption text-text-tertiary"
+                >
+                  Ditt förnamn
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  autoComplete="given-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Förnamn"
+                  className="field-input w-full px-4 text-body placeholder:text-text-tertiary"
+                />
+              </div>
+            )}
+
             {/* E-post */}
             <div>
               <label

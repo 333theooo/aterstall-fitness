@@ -27,6 +27,7 @@ export interface AppState {
   streak: number;
   premium: boolean;
   checkinCount: number;
+  name: string | null;
   // Prenumerationsdetaljer (null i localStorage-läge)
   lastPaymentStatus: string | null;
   cancelAtPeriodEnd: boolean;

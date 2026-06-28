@@ -31,6 +31,7 @@ interface Props {
   history: CheckinPost[];
   premium: boolean;
   streak: number;
+  name?: string | null;
   onCheckin: () => void;
   onPass: () => void;
   onInsikter: () => void;
@@ -45,6 +46,7 @@ export default function StartVy({
   history,
   premium,
   streak,
+  name,
   onCheckin,
   onPass,
   onInsikter,
@@ -70,15 +72,16 @@ export default function StartVy({
 
   return (
     <Screen>
-      {/* Header — hälsning + streak-chip */}
-      <header className="flex items-end justify-between">
+      {/* Header — hälsning + datum + streak-chip */}
+      <header className="flex items-center justify-between">
         <div>
-          <p className="text-caption uppercase tracking-[0.12em] text-text-tertiary">
-            Återställ
-          </p>
-          <h1 className="mt-1 text-heading text-text-primary">
-            {harCheckatInIdag ? "Bra jobbat idag" : "Morgonens frågor"}
-          </h1>
+          {name && (
+            <div className="mb-0.5 flex items-baseline gap-1.5">
+              <span className="text-caption text-text-tertiary">Hej,</span>
+              <span className="text-body font-semibold text-text-primary">{name}</span>
+            </div>
+          )}
+          <p className="text-subheading font-medium text-text-primary">{formatDag()}</p>
         </div>
         <div className="chip animate-bounce-in delay-3">
           <Flame size={15} strokeWidth={1.8} className="text-accent" />
@@ -223,54 +226,35 @@ export default function StartVy({
       </div>
 
       {/* Premium */}
-      <Card padding="md" className="animate-enter delay-5 mt-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-caption uppercase tracking-[0.1em] text-text-tertiary">
-              {premium ? "Premium" : "Gratis"}
-            </p>
-            <h3 className="mt-2 text-subheading text-text-primary">
-              {premium
-                ? "Hela passbanken är upplåst."
-                : "Check-in, status och ett pass per nivå ingår."}
-            </h3>
-          </div>
-          {premium ? (
-            <Sparkles size={20} strokeWidth={1.6} className="text-accent" />
-          ) : (
-            <LockKeyhole
-              size={20}
-              strokeWidth={1.6}
-              className="text-text-tertiary"
-            />
-          )}
+      {premium ? (
+        <div className="animate-enter delay-5 mt-6 flex items-center gap-2 px-1">
+          <Sparkles size={15} strokeWidth={1.6} className="text-accent" />
+          <span className="text-bodysm text-text-secondary">Premium aktivt</span>
         </div>
-
-        {!premium && (
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <button
-              onClick={() => onPlan("year")}
-              className="press tile px-4 py-3 text-left"
-            >
-              <span className="block text-bodysm font-medium text-text-primary">
-                Premium år
-              </span>
-              <span className="text-caption text-text-secondary">
-                {formatSEK(PLANS.year.amount)} · hela passbanken
-              </span>
-            </button>
-            <button
-              onClick={() => onPlan("month")}
-              className="press tile px-4 py-3 text-left"
-            >
-              <span className="block text-bodysm font-medium text-text-primary">
-                Premium månad
-              </span>
-              <span className="text-caption text-text-secondary">{formatSEK(PLANS.month.amount)}</span>
-            </button>
+      ) : (
+        <Card padding="md" className="animate-enter delay-5 mt-6">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-hero font-semibold leading-none text-text-primary">
+                {formatSEK(PLANS.month.amount)}
+              </p>
+              <p className="mt-1.5 text-caption text-text-secondary">
+                per månad · avsluta när du vill
+              </p>
+            </div>
+            <LockKeyhole size={18} strokeWidth={1.5} className="mb-0.5 shrink-0 text-text-tertiary" />
           </div>
-        )}
-      </Card>
+          <Button glow className="mt-4" onClick={() => onPlan("month")}>
+            Lås upp
+          </Button>
+          <button
+            onClick={() => onPlan("year")}
+            className="press mt-3 w-full text-center text-bodysm text-text-tertiary hover:text-text-secondary"
+          >
+            Eller {formatSEK(PLANS.year.amount)}/år · spara {PLANS.year.savingsPercent}%
+          </button>
+        </Card>
+      )}
     </Screen>
   );
 }
@@ -295,4 +279,11 @@ function ActionCard({
       <p className="mt-1 text-caption text-text-secondary">{text}</p>
     </button>
   );
+}
+
+function formatDag(d: Date = new Date()): string {
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const day = d.getDate();
+  const month = d.toLocaleDateString("sv-SE", { month: "short" });
+  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} ${month}`;
 }

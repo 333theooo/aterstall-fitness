@@ -23,7 +23,7 @@ const PUNKTER = [
 export default function UppgraderaModal({
   onStang,
   onKop,
-  defaultPlan = "year",
+  defaultPlan = "month",
   defaultFounding = false,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -36,37 +36,38 @@ export default function UppgraderaModal({
   }, []);
 
   const yearAmount = foundingApplicable ? FOUNDING.amount : PLANS.year.amount;
-  const yearSublabel = foundingApplicable ? FOUNDING.sublabel : PLANS.year.sublabel;
+  const yearMonthlyEq = PLANS.year.monthlyEquivalent;
 
-  const ctaBelopp =
+  const ctaText =
     valdPlan === "year"
-      ? `${formatSEK(yearAmount)}/år`
-      : `${formatSEK(PLANS.month.amount)}/mån`;
+      ? `Börja nu — ${formatSEK(yearAmount)}/år`
+      : `Börja nu — ${formatSEK(PLANS.month.amount)}/mån`;
 
   return (
     <div
       className="fixed inset-0 z-40 flex items-end justify-center px-0 sm:px-4 sm:pb-4"
       style={{
-        backgroundColor: open ? "rgba(0,0,0,0.58)" : "rgba(0,0,0,0)",
+        backgroundColor: open ? "rgba(0,0,0,0.65)" : "rgba(0,0,0,0)",
         transition: "background-color 0.35s var(--ease-screen)",
       }}
       onClick={onStang}
     >
       <div
-        className="w-full max-w-xl rounded-t-[var(--radius-card)] border border-separator bg-bg-raised p-5 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] sm:rounded-[var(--radius-card)] sm:p-6"
+        className="w-full max-w-xl rounded-t-[var(--radius-card)] border border-separator bg-bg-raised p-5 shadow-[0_-12px_40px_rgba(0,0,0,0.6)] sm:rounded-[var(--radius-card)] sm:p-6"
         style={{
           transform: open ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.35s var(--ease-screen)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="mb-5 flex items-start justify-between gap-5">
           <div>
             <p className="text-caption uppercase tracking-[0.08em] text-text-tertiary">
               Premium
             </p>
-            <h2 className="mt-2 text-heading text-text-primary">
-              Mer variation, samma lugn.
+            <h2 className="mt-1.5 text-heading text-text-primary">
+              Lås upp allt.
             </h2>
           </div>
           <button
@@ -78,91 +79,96 @@ export default function UppgraderaModal({
           </button>
         </div>
 
-        <div className="my-5 grid gap-3">
+        {/* Feature list — compact */}
+        <div className="mb-5 grid gap-2">
           {PUNKTER.map((punkt) => (
-            <div key={punkt} className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-accent">
-                <Check size={14} strokeWidth={1.7} />
+            <div key={punkt} className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-accent">
+                <Check size={12} strokeWidth={2} />
               </span>
-              <p className="text-bodysm text-text-primary">{punkt}</p>
+              <p className="text-bodysm text-text-secondary">{punkt}</p>
             </div>
           ))}
         </div>
 
-        {/* Plan-väljare — årsplan är default */}
-        <div className="mb-5 grid grid-cols-2 gap-3">
-          <PlanKort
-            vald={valdPlan === "year"}
-            label={foundingApplicable ? FOUNDING.label : PLANS.year.label}
-            sublabel={yearSublabel}
-            badge={
-              foundingApplicable
-                ? "Grundarpris"
-                : `Bästa värdet · ${PLANS.year.savingsPercent}% rabatt`
-            }
-            badgeHighlight={!foundingApplicable}
-            onClick={() => setValdPlan("year")}
-          />
-          <PlanKort
-            vald={valdPlan === "month"}
-            label={PLANS.month.label}
-            sublabel={PLANS.month.sublabel}
-            onClick={() => setValdPlan("month")}
-          />
-        </div>
+        {/* Month plan — dominant, full width */}
+        <button
+          onClick={() => setValdPlan("month")}
+          className="press relative w-full rounded-[var(--radius-card-inner)] border p-4 text-left"
+          style={{
+            borderColor: valdPlan === "month" ? "var(--accent)" : "var(--separator)",
+            backgroundColor: valdPlan === "month" ? "var(--accent-soft)" : "var(--bg-elevated)",
+            boxShadow: valdPlan === "month" ? "0 0 28px var(--accent-glow)" : "none",
+            transition: "border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease",
+          }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-hero font-semibold leading-none text-text-primary">
+                {formatSEK(PLANS.month.amount)}
+              </p>
+              <p className="mt-1 text-bodysm text-text-secondary">per månad · avsluta när du vill</p>
+            </div>
+            <div
+              className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2"
+              style={{
+                borderColor: valdPlan === "month" ? "var(--accent)" : "var(--separator)",
+                backgroundColor: valdPlan === "month" ? "var(--accent)" : "transparent",
+              }}
+            >
+              {valdPlan === "month" && (
+                <Check size={12} strokeWidth={2.5} style={{ color: "var(--bg)" }} />
+              )}
+            </div>
+          </div>
+        </button>
 
-        <Button glow onClick={() => onKop(valdPlan, foundingApplicable)}>
-          <span>Lås upp premium</span>
-          <span>{ctaBelopp}</span>
+        {/* Year plan — secondary, compact but shows savings */}
+        <button
+          onClick={() => setValdPlan("year")}
+          className="press mt-2 flex w-full items-center justify-between rounded-[var(--radius-card-inner)] border px-4 py-3 text-left"
+          style={{
+            borderColor: valdPlan === "year" ? "var(--accent)" : "var(--separator)",
+            backgroundColor: valdPlan === "year" ? "var(--accent-soft)" : "transparent",
+            boxShadow: valdPlan === "year" ? "0 0 16px var(--accent-glow)" : "none",
+            transition: "border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div>
+              <span className="text-body font-semibold text-text-primary">
+                {formatSEK(yearAmount)}
+              </span>
+              <span className="ml-1.5 text-bodysm text-text-secondary">per år</span>
+            </div>
+            <span
+              className="chip text-caption"
+              style={{ backgroundColor: "var(--accent-soft)", color: "var(--accent)" }}
+            >
+              {foundingApplicable ? "Grundarpris" : `spara ${PLANS.year.savingsPercent}%`}
+            </span>
+          </div>
+          <div
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2"
+            style={{
+              borderColor: valdPlan === "year" ? "var(--accent)" : "var(--separator)",
+              backgroundColor: valdPlan === "year" ? "var(--accent)" : "transparent",
+            }}
+          >
+            {valdPlan === "year" && (
+              <Check size={11} strokeWidth={2.5} style={{ color: "var(--bg)" }} />
+            )}
+          </div>
+        </button>
+
+        {/* CTA */}
+        <Button glow className="mt-4" onClick={() => onKop(valdPlan, foundingApplicable)}>
+          {ctaText}
         </Button>
         <Button variant="quiet" onClick={onStang} className="mt-2">
           Fortsätt gratis
         </Button>
       </div>
     </div>
-  );
-}
-
-function PlanKort({
-  vald,
-  label,
-  sublabel,
-  badge,
-  badgeHighlight = false,
-  onClick,
-}: {
-  vald: boolean;
-  label: string;
-  sublabel: string;
-  badge?: string;
-  badgeHighlight?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="press relative flex flex-col gap-1 rounded-[var(--radius-card-inner)] border p-4 text-left"
-      style={{
-        borderColor: vald ? "var(--accent)" : "var(--separator)",
-        backgroundColor: vald ? "var(--accent-soft)" : "var(--bg-elevated)",
-        boxShadow: vald ? "0 0 22px var(--accent-glow)" : "none",
-        transition: "border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease",
-      }}
-    >
-      {badge && (
-        <span
-          className={`chip mb-1 self-start text-caption${badgeHighlight ? " animate-glow-pulse" : ""}`}
-          style={
-            badgeHighlight
-              ? { backgroundColor: "var(--accent-soft)", color: "var(--accent)" }
-              : undefined
-          }
-        >
-          {badge}
-        </span>
-      )}
-      <span className="text-bodysm font-semibold text-text-primary">{label}</span>
-      <span className="text-caption text-text-secondary">{sublabel}</span>
-    </button>
   );
 }

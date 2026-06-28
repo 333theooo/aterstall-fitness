@@ -29,12 +29,13 @@ import { logEvent } from "@/lib/analytics";
 import { shouldShowPaywall, markPaywallShown } from "@/lib/paywall";
 import { lokalDatum } from "@/lib/streak";
 import { FOUNDING } from "@/lib/pricing";
-import { getSupabase, signOut, supabaseEnabled } from "@/lib/supabase/client";
+import { getSupabase, loadName, signOut, supabaseEnabled } from "@/lib/supabase/client";
+import WelcomeAnimation from "@/components/WelcomeAnimation";
 
 // Auth-lager: kontrollerar session innan appen visas.
 // "laddar" = väntar på Supabase; "valkomst"/"login"/"signup" = auth-flöde.
-// "app" = inloggad (eller Supabase ej konfigurerat → dev-läge).
-type AuthLage = "laddar" | "valkomst" | "login" | "signup" | "app";
+// "välkommen" = inloggad, visar välkomstskärm med namn; "app" = redo.
+type AuthLage = "laddar" | "valkomst" | "login" | "signup" | "välkommen" | "app";
 
 type Skede =
   | "hem"
@@ -71,6 +72,7 @@ export default function HomePage() {
   const [premium, setPremium] = useState(false);
   const [streak, setStreak] = useState(0);
   const [appState, setAppState] = useState<AppState | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [uppgraderaOffer, setUppgraderaOffer] = useState<UpgradeOffer | null>(null);
   const [selectedIntensity, setSelectedIntensity] =
     useState<IntensityLevel>("balanced");
@@ -87,17 +89,38 @@ export default function HomePage() {
     const sb = getSupabase();
     if (!sb) return;
 
-    // Kontrollera befintlig session
+    // Kontrollera befintlig session (remembered login → visa välkomstsanimation)
     sb.auth.getSession().then(({ data: { session } }) => {
-      setAuthLage(session ? "app" : "valkomst");
+      setAuthLage(session ? "välkommen" : "valkomst");
     });
 
-    // Lyssna på inloggning/utloggning
-    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
-      setAuthLage(session ? "app" : "valkomst");
+    // Lyssna på inloggning/utloggning — visa välkomst vid SIGNED_IN + INITIAL_SESSION
+    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setAuthLage("valkomst");
+      } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+        setAuthLage(session ? "välkommen" : "valkomst");
+      }
+      // TOKEN_REFRESHED, USER_UPDATED etc: ignoreras för att inte återvisa välkomstskärmen
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // ── Välkomstanimation: ladda namn, visa skärm, gå sedan till app ─────────
+  useEffect(() => {
+    if (authLage !== "välkommen") return;
+    let cancelled = false;
+    loadName().then((n) => {
+      if (cancelled) return;
+      setName(n);
+      if (n) {
+        setTimeout(() => { if (!cancelled) setAuthLage("app"); }, 2500);
+      } else {
+        setAuthLage("app");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [authLage]);
 
   // ── App-data: laddas när auth är klar ───────────────────────────────────
   useEffect(() => {
@@ -241,6 +264,9 @@ export default function HomePage() {
 
   // ── Auth-lager: visa rätt skärm baserat på auth-tillstånd ─────────────────
   if (authLage === "laddar") return <LaddaSkarm />;
+  if (authLage === "välkommen" && name)
+    return <WelcomeAnimation name={name} onDone={() => setAuthLage("app")} />;
+  if (authLage === "välkommen") return <LaddaSkarm />;
   if (authLage === "valkomst")
     return (
       <WelcomeScreen
@@ -304,6 +330,7 @@ export default function HomePage() {
             history={history}
             premium={premium}
             streak={streak}
+            name={name}
             onCheckin={() => setSkede("checkin")}
             onPass={() => setSkede("intensity")}
             onInsikter={() => setSkede("insikter")}
@@ -330,6 +357,7 @@ export default function HomePage() {
             history={history}
             premium={premium}
             streak={streak}
+            name={name}
             onCheckin={() => setSkede("checkin")}
             onPass={() => setSkede("intensity")}
             onInsikter={() => setSkede("insikter")}

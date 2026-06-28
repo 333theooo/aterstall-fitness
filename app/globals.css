@@ -195,6 +195,25 @@ body {
   animation: float 4s ease-in-out infinite;
 }
 
+/* Välkommen-skärm: fade + slide up */
+@keyframes welcome-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-welcome-in {
+  animation: welcome-in 0.65s ease-out both;
+}
+
+/* Progress bar: fills left→right over a set duration */
+@keyframes progress-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.animate-progress-fill {
+  transform-origin: left;
+  animation: progress-fill 2.5s linear both;
+}
+
 /* Stagger-fördröjningar för kort-kaskad */
 .delay-1 { animation-delay: 60ms; }
 .delay-2 { animation-delay: 120ms; }

@@ -39,11 +39,28 @@ export async function getAccessToken(): Promise<string | null> {
   return data.session?.access_token ?? null;
 }
 
-/** Skapar ett nytt konto med e-post och lösenord. */
-export async function signUpWithEmail(email: string, password: string) {
+/** Skapar ett nytt konto med e-post, lösenord och valfritt namn. */
+export async function signUpWithEmail(email: string, password: string, name?: string) {
   const sb = getSupabase();
   if (!sb) throw new Error("Supabase ej konfigurerat");
-  return sb.auth.signUp({ email, password });
+  return sb.auth.signUp({
+    email,
+    password,
+    options: name ? { data: { name } } : undefined,
+  });
+}
+
+/** Hämtar användarens namn från profiles-tabellen. */
+export async function loadName(): Promise<string | null> {
+  const sb = getSupabase();
+  const userId = await ensureUser();
+  if (!sb || !userId) return null;
+  const { data } = await sb
+    .from("profiles")
+    .select("name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (data?.name as string | null) ?? null;
 }
 
 /** Loggar in med e-post och lösenord. */

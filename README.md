@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Återställ
 
-## Getting Started
+Svensk träningsapp för bekvämlighet och anonymitet. Daglig check-in (sömn,
+trötthet, senaste passets belastning) → transparent status (Redo / Gränsfall
+/ Vila) → ett pass anpassat efter statusen. Hemma/rum-träning är default.
 
-First, run the development server:
+All visuell implementation styrs av `../STYLE_BIBLE.md`. Logik/flöde härstammar
+från prototypen `../aterstall-app.jsx` (dess visuella del används inte).
+
+## Kom igång
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Öppna http://localhost:3000. Utan miljövariabler kör appen mot **localStorage**
+(lokal dev/demo) och premium kan aktiveras lokalt utan riktig betalning.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Arkitektur
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Lager | Plats |
+|---|---|
+| Designtokens | `app/globals.css` (Tailwind v4 `@theme`) |
+| Statusmotor | `lib/status.ts` (transparent poängmodell) |
+| Passbank | `lib/passbank.ts` |
+| Datalager (async, moln/lokal) | `lib/data.ts` → Supabase eller `lib/storage.ts` |
+| Streak (delad ren logik) | `lib/streak.ts` |
+| Skärmar | `components/*` + `app/page.tsx` (skedesmaskin) |
+| Betalning | `app/api/checkout`, `app/api/webhook`, `app/api/portal` |
 
-## Learn More
+## Persistens (Supabase)
 
-To learn more about Next.js, take a look at the following resources:
+1. Skapa ett Supabase-projekt. Aktivera **Anonymous sign-ins** (Auth →
+   Providers). Appen är anonym: ingen e-post/lösenord, en `auth.users`-rad
+   per enhet via anonym inloggning.
+2. Kör `supabase/schema.sql` i SQL Editor (tabeller `profiles` + `checkins`,
+   RLS, auto-profil-trigger).
+3. Fyll i `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY` i `.env.local` (se `.env.example`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Streak = incheckade dagar i rad. **En vilodag bryter aldrig streaken** —
+det är incheckning som räknas, inte träning.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Betalning (Stripe)
 
-## Deploy on Vercel
+1. Skapa två återkommande priser (99 kr/mån, 790 kr/år) i Stripe Dashboard.
+   Lägg pris-id i `STRIPE_PRICE_MONTH` / `STRIPE_PRICE_YEAR`.
+2. Sätt `STRIPE_SECRET_KEY` och `NEXT_PUBLIC_BASE_URL`.
+3. Webhook → `POST /api/webhook`, lyssna på `customer.subscription.*` och
+   `checkout.session.completed`. Lägg signing secret i `STRIPE_WEBHOOK_SECRET`.
+   Lokalt: `stripe listen --forward-to localhost:3000/api/webhook`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Premium-flaggan i `profiles` sätts **endast** av webhooken (service role),
+aldrig från klienten. Köp kan ske vid onboarding (valfritt, tydlig "fortsätt
+gratis") eller organiskt när samma pass setts förut.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Bygg
+
+```bash
+npm run build
+```

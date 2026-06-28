@@ -1,26 +1,287 @@
 @import "tailwindcss";
 
+/* -------------------------------------------------------------------------
+   Återställ — designtokens (STYLE_BIBLE v2).
+   Mörk fitness-dashboard: lime/neon-accent på varm kolmörk bas.
+   Djup byggs nu med ytor, subtila gradients OCH skuggor/glow.
+   ------------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #14160f; /* varmare kolmörk, grön-svart ton */
+  --bg-raised: #1c1f16; /* kort-bakgrund, något lyft */
+  --bg-elevated: #20231a; /* sekundär kort-yta */
+  --bg-sunken: #101209;
+
+  --text-primary: #f5f5f0;
+  --text-secondary: #a8ab9e;
+  --text-tertiary: #6e7165;
+
+  --separator: #2a2d22;
+
+  /* Accent — lime/neon-grön, huvudaccent för status/progress/highlights */
+  --accent: #c6f135;
+  --accent-dim: #8fb024;
+  --accent-glow: rgba(198, 241, 53, 0.35);
+  --accent-soft: rgba(198, 241, 53, 0.12); /* mjuk fyllning bakom aktiv accent */
+
+  /* Radier (§5) — en skala, refereras överallt istället för inline-px */
+  --radius-card: 20px; /* kort */
+  --radius-card-inner: 16px; /* inre ytor (tiles) */
+  --radius-btn: 14px; /* knappar */
+  --radius-pill: 9999px; /* chips, pills, nav */
+
+  /* Statusfärger — samma accentfamilj nu */
+  --redo: #c6f135; /* lime, full energi */
+  --gransfall: #e8c547; /* varm gul, mellanläge */
+  --vila: #5b8a7a; /* dämpad teal-grön, lugn */
+  --focus: #c6f135;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-screen: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Färg → Tailwind-utilities (bg-bg, text-text-primary, border-separator …) */
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-sunken: var(--bg-sunken);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  --color-separator: var(--separator);
+
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-redo: var(--redo);
+  --color-gransfall: var(--gransfall);
+  --color-vila: var(--vila);
+  --color-focus: var(--focus);
+
+  --text-hero: 40px;
+  --text-hero--line-height: 1.05;
+  --text-hero--font-weight: 600;
+
+  --text-heading: 28px;
+  --text-heading--line-height: 1.16;
+  --text-heading--font-weight: 600;
+
+  --text-subheading: 18px;
+  --text-subheading--line-height: 1.3;
+  --text-subheading--font-weight: 500;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+
+  --text-bodysm: 15px;
+  --text-bodysm--line-height: 1.4;
+
+  --text-caption: 13px;
+  --text-caption--line-height: 1.3;
+
+  --text-micro: 11px;
+  --text-micro--line-height: 1.2;
+
+  /* Font (§2) — endast systemfont */
+  --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", system-ui,
+    sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(198, 241, 53, 0.3);
+  color: var(--text-primary);
+}
+
+/* ── Animationer ───────────────────────────────────────────────────────────
+   Varje animation förklarar ett tillståndsskifte — inga dekorativa loopar
+   förutom glow-pulse (CTA-feedback) och breathing-circle (recovery).
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* Generell entré — kort-stagger + checkin-komplettering */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-enter {
+  animation: enter 0.4s var(--ease-screen) both;
+}
+
+/* Hemskärm: subtilt scale-in (inte Y, för att kort-stagger ska kunna använda Y) */
+@keyframes home-in {
+  from { opacity: 0; transform: scale(0.984); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-home {
+  animation: home-in 0.42s var(--ease-screen) both;
+}
+
+/* Framåtnavigering: dra in från höger */
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-right {
+  animation: slide-right 0.32s var(--ease-screen) both;
+}
+
+/* Stapeldiagram: varje stapel växer från botten */
+@keyframes bar-rise {
+  from { transform: scaleY(0); opacity: 0.3; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+.bar-rise {
+  transform-origin: bottom;
+  animation: bar-rise 0.5s var(--ease-spring) both;
+}
+
+/* Badge/chip: studsar in */
+@keyframes bounce-in {
+  0%   { opacity: 0; transform: scale(0.55); }
+  55%  { transform: scale(1.14); }
+  78%  { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-bounce-in {
+  animation: bounce-in 0.48s var(--ease-spring) both;
+}
+
+/* Check-in svar: snap-bekräftelse vid val */
+@keyframes select-snap {
+  0%   { transform: scale(1); }
+  32%  { transform: scale(1.028); }
+  100% { transform: scale(1); }
+}
+.select-snap {
+  animation: select-snap 0.28s var(--ease-spring) both;
+}
+
+/* Primär CTA: andande glow (knapp med glow-prop) */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 10px var(--accent-glow); }
+  50%       { box-shadow: 0 0 26px var(--accent-glow), 0 0 0 1px rgba(198,241,53,0.16); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Stagger-fördröjningar för kort-kaskad */
+.delay-1 { animation-delay: 60ms; }
+.delay-2 { animation-delay: 120ms; }
+.delay-3 { animation-delay: 180ms; }
+.delay-4 { animation-delay: 240ms; }
+.delay-5 { animation-delay: 300ms; }
+.delay-6 { animation-delay: 360ms; }
+
+/* Knapptryck (§4) — krymper, byter aldrig färg som primär feedback */
+.press {
+  transition:
+    transform 0.3s var(--ease-spring),
+    box-shadow 0.3s var(--ease-spring);
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* Kort kan nu lyfta lätt vid press/hover (v2 tillåter skuggor) */
+.lift:active {
+  transform: translateY(-2px) scale(0.99);
+}
+
+.breathing-circle {
+  animation: breathe478 19s ease-in-out infinite;
+}
+
+@keyframes breathe478 {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.65;
+  }
+  21% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  58% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.72);
+    opacity: 0.65;
+  }
+}
+
+.app-shell {
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* Kort (§5) — rundare hörn, subtil gradient för djup, skugga för elevation */
+.surface {
+  background: linear-gradient(135deg, var(--bg-raised), var(--bg));
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.surface-subtle {
+  background: var(--bg-elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-card-inner);
+}
+
+/* Inre yta (tile) — stat-tal, sekvenssteg. Ingen kant, lyft via ytfärg. */
+.tile {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-card-inner);
+}
+
+/* Chip — tagg/pill. Liten etikett, caption-text. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-size: var(--text-caption);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+/* Glow runt aktiva element / accent-fyllningar (§3, §5) */
+.glow-accent {
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+
+.glow-soft {
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.hairline {
+  border-color: var(--separator);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --text-hero: 36px;
+    --text-heading: 25px;
+  }
 }

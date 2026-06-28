@@ -6,7 +6,9 @@ import {
   beraknaStatusResultat,
   type Belastning,
   type CheckinSvar,
+  type Plats,
   type StatusResultat,
+  type Tid,
 } from "@/lib/status";
 
 interface Props {
@@ -14,10 +16,12 @@ interface Props {
   onAvbryt: () => void;
 }
 
+type SvarVarde = number | Belastning | Plats | Tid;
+
 interface Alternativ {
   t: string;
   sub: string;
-  v: number | Belastning;
+  v: SvarVarde;
 }
 
 interface Fraga {
@@ -53,9 +57,29 @@ const FRAGOR: Fraga[] = [
     label: "Hur tungt var senaste passet?",
     context: "Din historik avgör vad kroppen klarar idag.",
     options: [
-      { t: "Hårt", sub: "Kände det efteråt", v: "tung" },
-      { t: "Lagom", sub: "Normal belastning", v: "medel" },
-      { t: "Lätt eller inget", sub: "Inte särskilt belastande", v: "latt" },
+      { t: "Hårt", sub: "Kände det efteråt", v: "tung" as Belastning },
+      { t: "Lagom", sub: "Normal belastning", v: "medel" as Belastning },
+      { t: "Lätt eller inget", sub: "Inte särskilt belastande", v: "latt" as Belastning },
+    ],
+  },
+  {
+    label: "Var ska du träna idag?",
+    context: "Jag anpassar passet efter var du befinner dig.",
+    options: [
+      { t: "Hemma", sub: "Inget gym behövs", v: "hem" as Plats },
+      { t: "På gymmet", sub: "Tillgång till utrustning", v: "gym" as Plats },
+      { t: "Utomhus", sub: "Löpning, park eller liknande", v: "utomhus" as Plats },
+      { t: "Vet inte", sub: "Hjälp mig välja", v: "okant" as Plats },
+    ],
+  },
+  {
+    label: "Hur lång tid har du?",
+    context: "Korta pass ger lika bra resultat — om rätt pass.",
+    options: [
+      { t: "15–20 min", sub: "Kort men effektivt", v: "kort" as Tid },
+      { t: "30–45 min", sub: "Lagom session", v: "mellan" as Tid },
+      { t: "60 min+", sub: "Full träning", v: "lang" as Tid },
+      { t: "Vet inte än", sub: "Anpassa efter känslan", v: "okant" as Tid },
     ],
   },
 ];
@@ -63,22 +87,23 @@ const FRAGOR: Fraga[] = [
 export default function CheckIn({ onKlar, onAvbryt }: Props) {
   const [steg, setSteg] = useState(0);
   const [valtIndex, setValtIndex] = useState<number | null>(null);
-  const [svar, setSvar] = useState<(number | Belastning)[]>([]);
+  const [svar, setSvar] = useState<SvarVarde[]>([]);
 
   useEffect(() => {
-    if (svar.length === 3) {
-      const fullSvar: CheckinSvar = {
-        somn: svar[0] as number,
-        trotthet: svar[1] as number,
-        belastning: svar[2] as Belastning,
-      };
-      const resultat = beraknaStatusResultat(fullSvar);
-      const timeout = setTimeout(() => onKlar(resultat, fullSvar), 600);
-      return () => clearTimeout(timeout);
-    }
+    if (svar.length !== FRAGOR.length) return;
+    const fullSvar: CheckinSvar = {
+      somn: svar[0] as number,
+      trotthet: svar[1] as number,
+      belastning: svar[2] as Belastning,
+      plats: svar[3] as Plats,
+      tid: svar[4] as Tid,
+    };
+    const resultat = beraknaStatusResultat(fullSvar);
+    const timeout = setTimeout(() => onKlar(resultat, fullSvar), 600);
+    return () => clearTimeout(timeout);
   }, [svar, onKlar]);
 
-  function valj(index: number, v: number | Belastning) {
+  function valj(index: number, v: SvarVarde) {
     if (valtIndex !== null) return;
     setValtIndex(index);
     setTimeout(() => {
@@ -109,7 +134,6 @@ export default function CheckIn({ onKlar, onAvbryt }: Props) {
           <p className="mt-2 text-bodysm text-text-secondary">
             Din coach räknar ut din dag…
           </p>
-          {/* Pulsing dots */}
           <div className="mt-5 flex items-center justify-center gap-1.5">
             {[0, 1, 2].map((i) => (
               <div
@@ -151,19 +175,13 @@ export default function CheckIn({ onKlar, onAvbryt }: Props) {
             {steg + 1} / {FRAGOR.length}
           </span>
         </div>
-        {/* Segmented progress dots */}
         <div className="flex gap-1.5">
           {FRAGOR.map((_, i) => (
             <div
               key={i}
               className="h-1 flex-1 rounded-full transition-all duration-500"
               style={{
-                backgroundColor:
-                  i < steg
-                    ? "var(--accent)"
-                    : i === steg
-                      ? "var(--accent)"
-                      : "var(--separator)",
+                backgroundColor: i <= steg ? "var(--accent)" : "var(--separator)",
               }}
             />
           ))}
@@ -187,34 +205,23 @@ export default function CheckIn({ onKlar, onAvbryt }: Props) {
               className={`press animate-enter flex w-full items-center gap-4 rounded-[var(--radius-card)] border px-5 py-4 text-left${valt ? " select-snap" : ""}`}
               style={{
                 borderColor: valt ? "var(--accent)" : "var(--separator)",
-                backgroundColor: valt
-                  ? "var(--accent-soft)"
-                  : "var(--bg-raised)",
+                backgroundColor: valt ? "var(--accent-soft)" : "var(--bg-raised)",
                 boxShadow: valt ? "0 0 20px var(--accent-glow)" : "none",
                 transition:
                   "background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
                 animationDelay: `${i * 55}ms`,
               }}
             >
-              {/* Letter badge → checkmark on select */}
               <span
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl font-bold transition-all duration-150"
                 style={{
-                  backgroundColor: valt
-                    ? "var(--accent)"
-                    : "var(--bg-elevated)",
+                  backgroundColor: valt ? "var(--accent)" : "var(--bg-elevated)",
                   color: valt ? "var(--bg)" : "var(--text-tertiary)",
                   fontSize: "12px",
                 }}
               >
-                {valt ? (
-                  <Check size={13} strokeWidth={2.5} />
-                ) : (
-                  LETTERS[i]
-                )}
+                {valt ? <Check size={13} strokeWidth={2.5} /> : LETTERS[i]}
               </span>
-
-              {/* Text */}
               <div className="min-w-0">
                 <span className="block text-body font-semibold text-text-primary">
                   {opt.t}

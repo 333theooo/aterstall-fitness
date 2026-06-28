@@ -197,6 +197,13 @@ export default function HomePage() {
     return resultat ?? dagensResultat(history);
   }, [history, resultat]);
 
+  // Latest today's check-in svar — used for personalizing StatusVy + StartVy CTA
+  const dagensSvar = useMemo(() => {
+    const idag = lokalDatum();
+    const post = history.findLast((p) => p.date === idag);
+    return post?.svar ?? null;
+  }, [history]);
+
   const aktivStatus: Status = aktivtResultat?.status ?? "redo";
 
   function oppnaUppgradera(offer: UpgradeOffer = { plan: "year", founding: false }) {
@@ -221,6 +228,20 @@ export default function HomePage() {
   async function sparaCheckin(nyttResultat: StatusResultat, svar: CheckinSvar) {
     setResultat(nyttResultat);
     setSkede("status");
+
+    // Pre-populate intensity + equipment from check-in answers so the user
+    // doesn't have to re-answer when tapping "Visa pass"
+    if (svar.tid && svar.tid !== "okant") {
+      const intensity: IntensityLevel =
+        svar.tid === "kort" ? "calm" : svar.tid === "lang" ? "focused" : "balanced";
+      updateIntensity(intensity);
+    }
+    if (svar.plats && svar.plats !== "okant") {
+      const equipment: EquipmentType[] =
+        svar.plats === "gym" ? ["mat", "dumbbells"] : ["none"];
+      updateEquipment(equipment);
+    }
+
     const state = await saveCheckin(nyttResultat.status, svar);
     setAppState(state);
     setPremium(state.premium);
@@ -346,6 +367,7 @@ export default function HomePage() {
           <StatusVy
             resultat={aktivtResultat}
             streak={streak}
+            svar={dagensSvar}
             onVisaPass={() => setSkede("intensity")}
             onInsikter={() => setSkede("insikter")}
             onNyCheckin={() => setSkede("checkin")}

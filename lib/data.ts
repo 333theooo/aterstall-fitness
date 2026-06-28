@@ -26,13 +26,21 @@ interface CheckinRad {
   somn: number;
   trotthet: number;
   belastning: CheckinSvar["belastning"];
+  plats: CheckinSvar["plats"];
+  tid: CheckinSvar["tid"];
 }
 
 function radTillPost(r: CheckinRad): CheckinPost {
   return {
     date: r.date,
     status: r.status,
-    svar: { somn: r.somn, trotthet: r.trotthet, belastning: r.belastning },
+    svar: {
+      somn: r.somn,
+      trotthet: r.trotthet,
+      belastning: r.belastning,
+      plats: r.plats,
+      tid: r.tid,
+    },
   };
 }
 
@@ -69,7 +77,7 @@ export async function loadState(): Promise<AppState> {
   const [{ data: rader }, { data: profil }] = await Promise.all([
     sb
       .from("checkins")
-      .select("date,status,somn,trotthet,belastning")
+      .select("date,status,somn,trotthet,belastning,plats,tid")
       .order("date", { ascending: true }),
     sb
       .from("profiles")
@@ -126,6 +134,8 @@ export async function saveCheckin(
         somn: svar.somn,
         trotthet: svar.trotthet,
         belastning: svar.belastning,
+        plats: svar.plats ?? null,
+        tid: svar.tid ?? null,
       },
       { onConflict: "user_id,date" },
     );

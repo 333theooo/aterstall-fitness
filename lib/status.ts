@@ -6,11 +6,15 @@
 
 export type Status = "redo" | "gransfall" | "vila";
 export type Belastning = "tung" | "medel" | "latt";
+export type Plats = "hem" | "gym" | "utomhus" | "okant";
+export type Tid = "kort" | "mellan" | "lang" | "okant";
 
 export interface CheckinSvar {
   somn: number; // ungefärligt antal timmar
   trotthet: number; // 1 (pigg) – 4 (slut)
   belastning: Belastning;
+  plats?: Plats;
+  tid?: Tid;
 }
 
 export interface StatusDel {

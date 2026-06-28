@@ -17,7 +17,10 @@ import {
   beraknaStatusResultat,
   STATUS_COPY,
   STATUS_VAR,
+  type CheckinSvar,
+  type Plats,
   type Status,
+  type Tid,
 } from "@/lib/status";
 import { lokalDatum } from "@/lib/streak";
 import type { CheckinPost, Plan } from "@/lib/types";
@@ -184,7 +187,9 @@ export default function StartVy({
           className="mt-5"
           onClick={harCheckatInIdag ? onPass : onCheckin}
         >
-          {harCheckatInIdag ? "Visa dagens pass" : "Gör check-in"}
+          {harCheckatInIdag
+            ? passKnappText(senastePost?.svar)
+            : "Gör check-in"}
           <ArrowRight size={19} strokeWidth={2} />
         </Button>
         {harCheckatInIdag && (
@@ -404,6 +409,25 @@ function ActionCard({
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+function passKnappText(svar?: CheckinSvar): string {
+  if (!svar) return "Visa dagens pass";
+  const plats = svar.plats;
+  const tid = svar.tid;
+  const platsTxt: string =
+    plats === "hem" ? "hemmapass" :
+    plats === "gym" ? "gympass" :
+    plats === "utomhus" ? "utomhuspass" :
+    "pass";
+  const tidTxt: string | null =
+    tid === "kort" ? "20 min" :
+    tid === "mellan" ? "45 min" :
+    tid === "lang" ? "60 min" :
+    null;
+  if (tidTxt) return `Visa ${tidTxt} ${platsTxt}`;
+  if (platsTxt !== "pass") return `Visa ${platsTxt}`;
+  return "Visa dagens pass";
+}
 
 function trotthetLabel(t: number): string {
   if (t <= 1) return "Pigg";

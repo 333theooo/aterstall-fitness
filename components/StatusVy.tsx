@@ -1,7 +1,14 @@
 "use client";
 
 import { ArrowRight, BarChart3, Dumbbell, RotateCcw } from "lucide-react";
-import { STATUS_COPY, STATUS_VAR, type StatusResultat } from "@/lib/status";
+import {
+  STATUS_COPY,
+  STATUS_VAR,
+  type CheckinSvar,
+  type Plats,
+  type StatusResultat,
+  type Tid,
+} from "@/lib/status";
 import Screen from "./ui/Screen";
 import Card from "./ui/Card";
 import Button from "./ui/Button";
@@ -10,6 +17,7 @@ import { DividedList, DividedRow } from "./ui/DividedList";
 interface Props {
   resultat: StatusResultat;
   streak: number;
+  svar?: CheckinSvar | null;
   onVisaPass: () => void;
   onInsikter: () => void;
   onNyCheckin: () => void;
@@ -17,6 +25,23 @@ interface Props {
 
 function poangText(poang: number) {
   return poang > 0 ? `+${poang}` : String(poang);
+}
+
+function passKontext(plats?: Plats, tid?: Tid): string {
+  const platsTxt =
+    plats === "hem" ? "hemma" :
+    plats === "gym" ? "på gym" :
+    plats === "utomhus" ? "utomhus" :
+    null;
+  const tidTxt =
+    tid === "kort" ? "15–20 min" :
+    tid === "mellan" ? "30–45 min" :
+    tid === "lang" ? "60 min+" :
+    null;
+  if (platsTxt && tidTxt) return `${tidTxt} · ${platsTxt}`;
+  if (tidTxt) return `Ca ${tidTxt}`;
+  if (platsTxt) return `Anpassat för ${platsTxt}`;
+  return "Baserat på hur du mår just nu.";
 }
 
 function poangFarg(poang: number) {
@@ -28,6 +53,7 @@ function poangFarg(poang: number) {
 export default function StatusVy({
   resultat,
   streak,
+  svar,
   onVisaPass,
   onInsikter,
   onNyCheckin,
@@ -35,6 +61,7 @@ export default function StatusVy({
   const copy = STATUS_COPY[resultat.status];
   const farg = STATUS_VAR[resultat.status];
   const visadStreak = Math.max(streak, 1);
+  const passKontextRad = passKontext(svar?.plats, svar?.tid);
 
   return (
     <Screen width="wide">
@@ -154,7 +181,7 @@ export default function StatusVy({
                 {copy.passNiva}
               </span>
               <span className="mt-1 block text-caption text-text-secondary">
-                Baserat på hur du mår just nu.
+                {passKontextRad}
               </span>
             </span>
             <ArrowRight size={20} strokeWidth={1.5} color={farg} />

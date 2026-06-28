@@ -14,6 +14,8 @@ import RevenueBanners from "@/components/RevenueBanners";
 import StartVy from "@/components/StartVy";
 import StatusVy from "@/components/StatusVy";
 import UppgraderaModal from "@/components/UppgraderaModal";
+import WelcomeScreen from "@/components/auth/WelcomeScreen";
+import AuthForm from "@/components/auth/AuthForm";
 import {
   beraknaStatusResultat,
   type CheckinSvar,
@@ -27,6 +29,12 @@ import { logEvent } from "@/lib/analytics";
 import { shouldShowPaywall, markPaywallShown } from "@/lib/paywall";
 import { lokalDatum } from "@/lib/streak";
 import { FOUNDING } from "@/lib/pricing";
+import { getSupabase, signOut, supabaseEnabled } from "@/lib/supabase/client";
+
+// Auth-lager: kontrollerar session innan appen visas.
+// "laddar" = väntar på Supabase; "valkomst"/"login"/"signup" = auth-flöde.
+// "app" = inloggad (eller Supabase ej konfigurerat → dev-läge).
+type AuthLage = "laddar" | "valkomst" | "login" | "signup" | "app";
 
 type Skede =
   | "hem"
@@ -53,6 +61,10 @@ function dagensResultat(history: CheckinPost[]) {
 }
 
 export default function HomePage() {
+  // Dev-läge utan Supabase startar direkt i "app"; annars väntar vi på session.
+  const [authLage, setAuthLage] = useState<AuthLage>(() =>
+    supabaseEnabled() ? "laddar" : "app",
+  );
   const [skede, setSkede] = useState<Skede>("hem");
   const [resultat, setResultat] = useState<StatusResultat | null>(null);
   const [history, setHistory] = useState<CheckinPost[]>([]);
@@ -69,7 +81,27 @@ export default function HomePage() {
   const [weeklyGoal, setWeeklyGoal] = useState(3);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
 
+  // ── Auth-gate: kontrollera session och lyssna på förändringar ──────────────
   useEffect(() => {
+    if (!supabaseEnabled()) return; // dev-läge: state initierades redan som "app"
+    const sb = getSupabase();
+    if (!sb) return;
+
+    // Kontrollera befintlig session
+    sb.auth.getSession().then(({ data: { session } }) => {
+      setAuthLage(session ? "app" : "valkomst");
+    });
+
+    // Lyssna på inloggning/utloggning
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      setAuthLage(session ? "app" : "valkomst");
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ── App-data: laddas när auth är klar ───────────────────────────────────
+  useEffect(() => {
+    if (authLage !== "app") return;
     let avbruten = false;
     (async () => {
       const state = await loadState();
@@ -136,7 +168,7 @@ export default function HomePage() {
     return () => {
       avbruten = true;
     };
-  }, []);
+  }, [authLage]);
 
   const aktivtResultat = useMemo(() => {
     return resultat ?? dagensResultat(history);
@@ -207,6 +239,23 @@ export default function HomePage() {
     oppnaUppgradera({ plan: "year", founding: false });
   }
 
+  // ── Auth-lager: visa rätt skärm baserat på auth-tillstånd ─────────────────
+  if (authLage === "laddar") return <LaddaSkarm />;
+  if (authLage === "valkomst")
+    return (
+      <WelcomeScreen
+        onSkapaKonto={() => setAuthLage("signup")}
+        onLoggaIn={() => setAuthLage("login")}
+      />
+    );
+  if (authLage === "login" || authLage === "signup")
+    return (
+      <AuthForm
+        initialMode={authLage}
+        onTillbaka={() => setAuthLage("valkomst")}
+      />
+    );
+
   return (
     <main className="app-shell relative flex min-h-dvh flex-col">
       {skede !== "checkin" && (
@@ -258,7 +307,7 @@ export default function HomePage() {
             onCheckin={() => setSkede("checkin")}
             onPass={() => setSkede("intensity")}
             onInsikter={() => setSkede("insikter")}
-            onPlan={(plan) => valjPlan(plan)}
+            onPlan={(plan) => oppnaUppgradera({ plan, founding: false })}
           />
         )}
 
@@ -284,7 +333,7 @@ export default function HomePage() {
             onCheckin={() => setSkede("checkin")}
             onPass={() => setSkede("intensity")}
             onInsikter={() => setSkede("insikter")}
-            onPlan={(plan) => valjPlan(plan)}
+            onPlan={(plan) => oppnaUppgradera({ plan, founding: false })}
           />
         )}
 
@@ -372,6 +421,25 @@ export default function HomePage() {
         </nav>
       )}
 
+      {/* Diskret utloggningsknapp — bara synlig när Supabase är konfigurerat */}
+      {supabaseEnabled() && skede === "hem" && (
+        <div className="fixed right-4 top-4 z-20">
+          <button
+            onClick={async () => { await signOut(); }}
+            className="press flex h-9 w-9 items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary"
+            style={{ backgroundColor: "var(--bg-elevated)" }}
+            aria-label="Logga ut"
+            title="Logga ut"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
       {uppgraderaOffer && (
         <UppgraderaModal
           defaultPlan={uppgraderaOffer.plan}
@@ -380,6 +448,19 @@ export default function HomePage() {
           onKop={(plan, founding) => valjPlan(plan, founding)}
         />
       )}
+    </main>
+  );
+}
+
+function LaddaSkarm() {
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-bg">
+      <Wind
+        size={28}
+        strokeWidth={1.5}
+        className="animate-pulse"
+        style={{ color: "var(--accent)" }}
+      />
     </main>
   );
 }

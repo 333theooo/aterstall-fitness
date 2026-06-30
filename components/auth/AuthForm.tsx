@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Eye, EyeOff, Wind } from "lucide-react";
-import { signInWithEmail, signUpWithEmail } from "@/lib/supabase/client";
+import { ArrowLeft, Check, Eye, EyeOff, Wind } from "lucide-react";
+import { signInWithEmail, signUpWithEmail, setRememberLogin } from "@/lib/supabase/client";
 
 type Mode = "signup" | "login";
 
 interface Props {
   initialMode?: Mode;
   onTillbaka: () => void;
+  onSuccess: () => void;
 }
 
-export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) {
+export default function AuthForm({ initialMode = "signup", onTillbaka, onSuccess }: Props) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visaLosenord, setVisaLosenord] = useState(false);
+  const [komIhag, setKomIhag] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bekraftelse, setBekraftelse] = useState(false);
@@ -33,17 +35,22 @@ export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) 
           setError(tolkFel(err.message));
           return;
         }
-        // Om email-bekräftelse är påslagen i Supabase → visa info
         if (data.user && !data.session) {
+          // Email-bekräftelse krävs → visa info-skärm
           setBekraftelse(true);
+        } else if (data.session) {
+          // Konto skapat direkt → visa välkomstanimation
+          onSuccess();
         }
-        // Om ingen bekräftelse krävs → onAuthStateChange i page.tsx sköter redirect
       } else {
         const { error: err } = await signInWithEmail(email.trim(), password);
         if (err) {
           setError(tolkFel(err.message));
+        } else {
+          setRememberLogin(komIhag);
+          // Inloggad → visa välkomstanimation
+          onSuccess();
         }
-        // Vid lyckad inloggning → onAuthStateChange i page.tsx sköter redirect
       }
     } finally {
       setLoading(false);
@@ -193,6 +200,29 @@ export default function AuthForm({ initialMode = "signup", onTillbaka }: Props) 
                 </button>
               </div>
             </div>
+
+            {/* Kom ihåg mig — bara i inloggningsläge */}
+            {mode === "login" && (
+              <div className="flex items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={komIhag}
+                  onClick={() => setKomIhag((v) => !v)}
+                  className="press flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[5px]"
+                  style={{
+                    backgroundColor: komIhag ? "var(--accent)" : "var(--bg-elevated)",
+                    border: komIhag ? "1px solid var(--accent)" : "1px solid var(--separator)",
+                    transition: "background-color 0.2s ease, border-color 0.2s ease",
+                  }}
+                >
+                  {komIhag && (
+                    <Check size={11} strokeWidth={2.5} style={{ color: "var(--bg)" }} />
+                  )}
+                </button>
+                <span className="text-caption text-text-secondary">Kom ihåg mig</span>
+              </div>
+            )}
           </div>
 
           {/* Fel */}

@@ -50,7 +50,7 @@ export async function signUpWithEmail(email: string, password: string, name?: st
   });
 }
 
-/** Hämtar användarens namn från profiles-tabellen. */
+/** Hämtar användarens namn — profiles-tabellen först, sedan user_metadata som fallback. */
 export async function loadName(): Promise<string | null> {
   const sb = getSupabase();
   const userId = await ensureUser();
@@ -60,7 +60,10 @@ export async function loadName(): Promise<string | null> {
     .select("name")
     .eq("user_id", userId)
     .maybeSingle();
-  return (data?.name as string | null) ?? null;
+  if (data?.name) return data.name as string;
+  // Fallback: namn från registreringen lagrat i user_metadata
+  const { data: { user } } = await sb.auth.getUser();
+  return (user?.user_metadata?.name as string | null) ?? null;
 }
 
 /** Loggar in med e-post och lösenord. */
@@ -75,4 +78,16 @@ export async function signOut(): Promise<void> {
   const sb = getSupabase();
   if (!sb) return;
   await sb.auth.signOut();
+}
+
+const REMEMBER_KEY = "aterstall.rememberLogin";
+
+export function getRememberLogin(): boolean {
+  try { return localStorage.getItem(REMEMBER_KEY) !== "0"; }
+  catch { return true; }
+}
+
+export function setRememberLogin(value: boolean): void {
+  try { localStorage.setItem(REMEMBER_KEY, value ? "1" : "0"); }
+  catch { /* ignore */ }
 }

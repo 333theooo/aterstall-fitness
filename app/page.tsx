@@ -29,13 +29,17 @@ import { logEvent } from "@/lib/analytics";
 import { shouldShowPaywall, markPaywallShown } from "@/lib/paywall";
 import { lokalDatum } from "@/lib/streak";
 import { FOUNDING } from "@/lib/pricing";
-import { getSupabase, loadName, signOut, supabaseEnabled } from "@/lib/supabase/client";
+import { getRememberLogin, getSupabase, loadName, signOut, supabaseEnabled } from "@/lib/supabase/client";
 import WelcomeAnimation from "@/components/WelcomeAnimation";
 
 // Auth-lager: kontrollerar session innan appen visas.
 // "laddar" = väntar på Supabase; "valkomst"/"login"/"signup" = auth-flöde.
 // "välkommen" = inloggad, visar välkomstskärm med namn; "app" = redo.
 type AuthLage = "laddar" | "valkomst" | "login" | "signup" | "välkommen" | "app";
+
+// localStorage-nyckel: satt när välkomstanimationen visas. Rensas vid utloggning,
+// så animationen visas igen nästa gång användaren loggar in.
+const WELCOMED_KEY = "aterstall.welcomed";
 
 type Skede =
   | "hem"
@@ -63,9 +67,17 @@ function dagensResultat(history: CheckinPost[]) {
 
 export default function HomePage() {
   // Dev-läge utan Supabase startar direkt i "app"; annars väntar vi på session.
-  const [authLage, setAuthLage] = useState<AuthLage>(() =>
-    supabaseEnabled() ? "laddar" : "app",
-  );
+  // Om användaren redan välkomnats (WELCOMED_KEY = "1") startar vi optimistiskt
+  // i "app" för att undvika att välkomstskärmen blinkar vid varje sidinläsning
+  // (t.ex. när mobila webbläsare återlöser inaktiva flikar). Sessionsvalideringen
+  // sker ändå i bakgrunden — är sessionen ogiltig skickas användaren till "valkomst".
+  const [authLage, setAuthLage] = useState<AuthLage>(() => {
+    if (!supabaseEnabled()) return "app";
+    try {
+      if (localStorage.getItem(WELCOMED_KEY) === "1") return "app";
+    } catch { /* ignore */ }
+    return "laddar";
+  });
   const [skede, setSkede] = useState<Skede>("hem");
   const [resultat, setResultat] = useState<StatusResultat | null>(null);
   const [history, setHistory] = useState<CheckinPost[]>([]);
@@ -89,26 +101,53 @@ export default function HomePage() {
     const sb = getSupabase();
     if (!sb) return;
 
-    // Kontrollera befintlig session (remembered login → visa välkomstsanimation)
-    sb.auth.getSession().then(({ data: { session } }) => {
-      setAuthLage(session ? "välkommen" : "valkomst");
-    });
-
-    // Lyssna på inloggning/utloggning — visa välkomst vid SIGNED_IN + INITIAL_SESSION
+    // Lyssna på inloggning/utloggning.
+    // SIGNED_IN: användaren loggade just in eller registrerade sig — visa alltid välkomst,
+    //   SÅVIDA vi redan befinner oss i "app" (= bakgrundstokenuppdatering, ignorera).
+    // INITIAL_SESSION: hanteras av getSession() nedan.
+    // TOKEN_REFRESHED, USER_UPDATED m.fl.: ignoreras medvetet.
     const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
+        localStorage.removeItem(WELCOMED_KEY);
         setAuthLage("valkomst");
-      } else if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-        setAuthLage(session ? "välkommen" : "valkomst");
+      } else if (event === "SIGNED_IN") {
+        // Fallback för SIGNED_IN (t.ex. email-verifieringslänk).
+        // Direkta inloggningar hanteras via AuthForm.onSuccess istället.
+        setAuthLage((current) => {
+          if (current === "app") return "app";
+          return session ? "välkommen" : "valkomst";
+        });
       }
-      // TOKEN_REFRESHED, USER_UPDATED etc: ignoreras för att inte återvisa välkomstskärmen
     });
+
+    // Kontrollera befintlig session vid uppstart.
+    // Körs EFTER att lyssnaren är registrerad för att undvika race mot INITIAL_SESSION.
+    sb.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        localStorage.removeItem(WELCOMED_KEY);
+        setAuthLage("valkomst");
+        return;
+      }
+      if (!getRememberLogin()) {
+        await sb.auth.signOut();
+        setAuthLage("valkomst");
+        return;
+      }
+      // Om vi redan är i "app" (optimistisk start) behöver vi inte göra något.
+      setAuthLage((current) => {
+        if (current === "app") return "app";
+        const alreadyWelcomed = localStorage.getItem(WELCOMED_KEY) === "1";
+        return alreadyWelcomed ? "app" : "välkommen";
+      });
+    });
+
     return () => subscription.unsubscribe();
   }, []);
 
   // ── Välkomstanimation: ladda namn, visa skärm, gå sedan till app ─────────
   useEffect(() => {
     if (authLage !== "välkommen") return;
+    localStorage.setItem(WELCOMED_KEY, "1");
     let cancelled = false;
     loadName().then((n) => {
       if (cancelled) return;
@@ -300,6 +339,7 @@ export default function HomePage() {
       <AuthForm
         initialMode={authLage}
         onTillbaka={() => setAuthLage("valkomst")}
+        onSuccess={() => setAuthLage("välkommen")}
       />
     );
 
